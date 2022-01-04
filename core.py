@@ -174,10 +174,6 @@ def get_valid_versions(source, version, lower_constraint, lower_constraint_opera
 
     allowed_versions.sort()
 
-    # print(f'Module: {module["name"]}, Current Version: {current_version}')
-    # print(f'Available versions: {available_versions}')
-    # print(f'Allowed versions: {allowed_versions}')
-
     return allowed_versions
 
     # Apply logic to select the correct bump
