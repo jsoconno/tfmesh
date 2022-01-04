@@ -225,7 +225,7 @@ def get_latest_version(version_list):
     """
     version_list.sort(reverse=True)
     latest_version = version_list[0]
-    
+
     return latest_version
 
 def update_version(file_path, code, current_tag, latest_tag):
@@ -248,7 +248,7 @@ github_token = os.environ["PAT_TOKEN"]
 files = get_terraform_files("terraform")
 dependencies = get_dependencies(files)
 
-table_headers = ["target", "name", "current version", "constraint", "latest version", "status"]
+table_headers = ["target", "name", "config version", "constraint", "latest version", "status"]
 table = []
 
 for dependency in dependencies:
