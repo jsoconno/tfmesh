@@ -23,7 +23,7 @@ def get_semantic_version(version):
     """
     Get a dictionary of the semantic version components including major, minor, patch, and pre-release.
     """
-    regex_pattern = r'((\d+)\.*(\d+)*\.*(\d+)*[^a-zA-Z\d\s:]*(.*))'
+    regex_pattern = r'((\d+)\.*(\d+)*\.*(\d+)*-?([\S]*))'
     # regex_pattern = r"(\d*)\.(\d*)\.?(\d*)[^a-zA-Z\d\s:]?(.*)"
     # Get first match and first result
     version = re.findall(regex_pattern, version)[0][0]
@@ -63,6 +63,17 @@ def get_terraform_provider_versions(provider):
     data = json.loads(response.text)
     
     return data["versions"]
+
+def get_terraform_versions(terraform):
+    """
+    Gets a list of terraform versions.
+    """
+    response = requests.get("https://releases.hashicorp.com/terraform")
+    
+    pattern = r'terraform_((\d+)\.*(\d+)*\.*(\d+)*-?([\S]*))</a>'
+    versions = re.findall(pattern, response.text)
+
+    return [version[0] for version in versions]
 
 def get_modules(terraform_file_list):
     """
@@ -131,23 +142,22 @@ def get_github_user_and_repo(source):
 
     return data
 
-def get_valid_versions(module_source, module_version, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator, global_bump_setting="minor"):
+def get_valid_versions(source, version, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator, keep_fresh=False, global_bump_level="patch"):
     """
     Takes in module version and constraint information to create a list of valid versions
     """
     # Pull available versions
     if module["target"] == "module (git)":
-        data = get_github_user_and_repo(module_source)
+        data = get_github_user_and_repo(source)
         available_versions = get_github_module_versions(data["user"], data["repo"], token=github_token)
     elif module["target"] == "module (registry)":
-        available_versions = get_terraform_module_versions(module_source)
+        available_versions = get_terraform_module_versions(source)
     elif module["target"] == "provider":
-        available_versions = get_terraform_provider_versions(module_source)
+        available_versions = get_terraform_provider_versions(source)
     elif module["target"] == "terraform":
-        pass
-
-    # Get latest major, minor, and patch versionsį
-    # version_components = get_semantic_version(module_version)
+        available_versions = get_terraform_versions(source)
+    else:
+        print('what happened?')
 
     if lower_constraint and not lower_constraint_operator:
         lower_constraint_operator = "="
@@ -157,9 +167,8 @@ def get_valid_versions(module_source, module_version, lower_constraint, lower_co
     elif lower_constraint and lower_constraint_operator:
         allowed_versions = [version for version in available_versions if compare_versions(get_semantic_version(version), lower_constraint_operator, lower_constraint)]
     else:
-        allowed_versions = available_versions
-
-    
+        # Ensures that pre-release versions are removed if there are no constraints.
+        allowed_versions = [version for version in available_versions if get_semantic_version(version)]
 
     # Add logic that applies global filters
 
@@ -241,7 +250,7 @@ github_token = os.environ["PAT_TOKEN"]
 files = get_terraform_files("terraform")
 modules = get_modules(files)
 
-table_headers = ["target", "name", "current version", "constraint", "new version", "status"]
+table_headers = ["target", "name", "current version", "constraint", "latest version", "status"]
 table = []
 
 for module in modules:
@@ -256,7 +265,9 @@ for module in modules:
     )
     latest_version = get_latest_version(valid_versions)
 
-    if current_version != latest_version:
+    if current_version != latest_version and module["constraint"] == "":
+        status = "pinned - stale"
+    elif current_version != latest_version:
         update_version(module["file_path"], module["code"], current_version, latest_version)
         if compare_versions(get_semantic_version(current_version), ">", get_semantic_version(latest_version)):
             status = "downgraded"
