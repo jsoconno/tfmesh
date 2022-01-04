@@ -46,11 +46,11 @@ def get_github_module_versions(user, repo, token=None):
 
     return tag_list
 
-def get_terraform_module_versions(module_source):
+def get_terraform_module_versions(module):
     """
     Gets a list of versions for a given terraform module.
     """
-    response = requests.get(f"https://registry.terraform.io/v1/modules/{module_source}")
+    response = requests.get(f"https://registry.terraform.io/v1/modules/{module}")
     data = json.loads(response.text)
     
     return data["versions"]
@@ -64,7 +64,7 @@ def get_terraform_provider_versions(provider):
     
     return data["versions"]
 
-def get_terraform_versions(terraform):
+def get_terraform_versions():
     """
     Gets a list of terraform versions.
     """
@@ -155,7 +155,7 @@ def get_valid_versions(source, version, lower_constraint, lower_constraint_opera
     elif dependency["target"] == "provider":
         available_versions = get_terraform_provider_versions(source)
     elif dependency["target"] == "terraform":
-        available_versions = get_terraform_versions(source)
+        available_versions = get_terraform_versions()
     else:
         print('what happened?')
 
