@@ -75,9 +75,9 @@ def get_terraform_versions(terraform):
 
     return [version[0] for version in versions]
 
-def get_modules(terraform_file_list):
+def get_dependencies(terraform_file_list):
     """
-    Gets a list of modules that match a semantic version pattern.
+    Gets a list of dependencies that match a semantic version pattern.
     """
     terraform = r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'
     terraform_providers = r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'
@@ -91,7 +91,7 @@ def get_modules(terraform_file_list):
         git_modules,
     ]
 
-    modules = []
+    dependencies = []
 
     for terraform_file in terraform_file_list:
         with open(terraform_file) as f:
@@ -125,9 +125,9 @@ def get_modules(terraform_file_list):
                         "upper_constraint_operator": result[7],
                         "upper_constraint": version_tuple(result[8])
                     }
-                    modules.append(data)
+                    dependencies.append(data)
     
-    return modules
+    return dependencies
 
 def get_github_user_and_repo(source):
     """
@@ -144,17 +144,17 @@ def get_github_user_and_repo(source):
 
 def get_valid_versions(source, version, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator):
     """
-    Takes in module version and constraint information to create a list of valid versions
+    Takes in dependency version and constraint information to create a list of valid versions
     """
     # Pull available versions
-    if module["target"] == "module (git)":
+    if dependency["target"] == "module (git)":
         data = get_github_user_and_repo(source)
         available_versions = get_github_module_versions(data["user"], data["repo"], token=github_token)
-    elif module["target"] == "module (registry)":
+    elif dependency["target"] == "module (registry)":
         available_versions = get_terraform_module_versions(source)
-    elif module["target"] == "provider":
+    elif dependency["target"] == "provider":
         available_versions = get_terraform_provider_versions(source)
-    elif module["target"] == "terraform":
+    elif dependency["target"] == "terraform":
         available_versions = get_terraform_versions(source)
     else:
         print('what happened?')
@@ -244,27 +244,27 @@ def update_version(file_path, code, current_tag, latest_tag):
 
 github_token = os.environ["PAT_TOKEN"]
 files = get_terraform_files("terraform")
-modules = get_modules(files)
+dependencies = get_dependencies(files)
 
 table_headers = ["target", "name", "current version", "constraint", "latest version", "status"]
 table = []
 
-for module in modules:
-    current_version = module["version"]
+for dependency in dependencies:
+    current_version = dependency["version"]
     valid_versions = get_valid_versions(
-        module["source"], 
-        module["version"], 
-        module["lower_constraint"], 
-        module["lower_constraint_operator"], 
-        module["upper_constraint"], 
-        module["upper_constraint_operator"]
+        dependency["source"], 
+        dependency["version"], 
+        dependency["lower_constraint"], 
+        dependency["lower_constraint_operator"], 
+        dependency["upper_constraint"], 
+        dependency["upper_constraint_operator"]
     )
     latest_version = get_latest_version(valid_versions)
 
-    if current_version != latest_version and module["constraint"] == "":
+    if current_version != latest_version and dependency["constraint"] == "":
         status = "pinned - stale"
     elif current_version != latest_version:
-        update_version(module["file_path"], module["code"], current_version, latest_version)
+        update_version(dependency["file_path"], dependency["code"], current_version, latest_version)
         if compare_versions(get_semantic_version(current_version), ">", get_semantic_version(latest_version)):
             status = "downgraded"
         else:
@@ -273,6 +273,6 @@ for module in modules:
         status = "up-to-date"
         latest_version = None
         
-    table.append([module["target"], module["name"], current_version, module["constraint"], latest_version, status])
+    table.append([dependency["target"], dependency["name"], current_version, dependency["constraint"], latest_version, status])
 
 print(tabulate(table, headers=table_headers, tablefmt='orgtbl'))
