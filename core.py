@@ -46,20 +46,20 @@ def get_github_module_versions(user, repo, token=None):
 
     return tag_list
 
-def get_terraform_module_versions(module):
+def get_terraform_module_versions(source):
     """
     Gets a list of versions for a given terraform module.
     """
-    response = requests.get(f"https://registry.terraform.io/v1/modules/{module}")
+    response = requests.get(f"https://registry.terraform.io/v1/modules/{source}")
     data = json.loads(response.text)
     
     return data["versions"]
 
-def get_terraform_provider_versions(provider):
+def get_terraform_provider_versions(source):
     """
     Gets a list of versions for a given terraform provider such as aws, gcp, or azurerm.
     """
-    response = requests.get(f"https://registry.terraform.io/v1/providers/{provider}")
+    response = requests.get(f"https://registry.terraform.io/v1/providers/{source}")
     data = json.loads(response.text)
     
     return data["versions"]
@@ -75,7 +75,7 @@ def get_terraform_versions():
 
     return [version[0] for version in versions]
 
-def get_dependencies(terraform_file_list):
+def get_dependencies(terraform_files):
     """
     Gets a list of dependencies that match a semantic version pattern.
     """
@@ -93,7 +93,7 @@ def get_dependencies(terraform_file_list):
 
     dependencies = []
 
-    for terraform_file in terraform_file_list:
+    for terraform_file in terraform_files:
         with open(terraform_file) as f:
             path = Path(terraform_file)
             contents = f.read()
