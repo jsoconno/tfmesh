@@ -185,6 +185,7 @@ def version_tuple(version):
     try:
         version = tuple(map(int, (version.split("."))))
     except:
+        # Added to fix a breaking change for pre-release versions.
         version = None
 
     return version
@@ -224,6 +225,7 @@ def get_latest_version(version_list):
     """
     version_list.sort(reverse=True)
     latest_version = version_list[0]
+    
     return latest_version
 
 def update_version(file_path, code, current_tag, latest_tag):
