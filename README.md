@@ -116,14 +116,14 @@ Example:
 tfmesh set s3 --version 1.0.0
 ```
 
-## Update command
-* `update` - action for updating terraform versions based on constraints.
+## Upgrade command
+* `upgrade` - action for upgrading terraform versions based on constraints.
   * `all` - updates all terraform, providers, and modules.
   * `terraform` - updates terraform.
   * `providers` - updates providers.
   * `modules` - updates modules.
 
-All commands support a `--what-if` flag that will provide terminal output of what would happen if the update command was ran.
+All commands support a `--what-if` flag that will provide terminal output of what would happen if the update command was ran.  They also support a `--verbose` flag that outputs additional configuration information to the terminal.
 
 Example:
 ```cmd
