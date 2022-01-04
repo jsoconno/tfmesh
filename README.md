@@ -132,13 +132,14 @@ tfmesh update all
 
 # Example Output
 ```
-| target            | name        | current version   | constraint      | new version   | status     |
-|-------------------+-------------+-------------------+-----------------+---------------+------------|
-| module (registry) | consul      | 0.5.0             | >=0.2.0, <0.6.0 |               | up-to-date |
-| module (registry) | conventions | 0.4.1             | ~>0.4.0         |               | up-to-date |
-| module (git)      | api_gateway | v1.0.2            |                 |               | up-to-date |
-| module (git)      | lambda      | v1.1.2            | >=1.0.0, <2.0.0 |               | up-to-date |
-| module (git)      | s3          | v1.1.0            | ~>1.0           |               | up-to-date |
-| provider          | aws         | 3.0.0             | ~>3.0           | 3.9.0         | upgraded   |
-| provider          | aws         | 1.0.0             | >=1.0.0, <2.0.0 | 1.9.0         | upgraded   |
+| target            | name        | current version   | constraint      | latest version   | status         |
+|-------------------+-------------+-------------------+-----------------+------------------+----------------|
+| module (registry) | consul      | 0.5.0             | >=0.2.0, <0.6.0 |                  | up-to-date     |
+| module (registry) | conventions | 1.0.1             | ~>0.4.0         | 0.4.1            | downgraded     |
+| module (git)      | api_gateway | v1.0.2            |                 |                  | up-to-date     |
+| module (git)      | lambda      | v1.0.2            | >=1.0.0, <2.0.0 | v1.1.2           | upgraded       |
+| module (git)      | s3          | v1.1.0            | ~>1.0           |                  | up-to-date     |
+| terraform         | terraform   | 1.0.0             |                 | 1.1.2            | pinned - stale |
+| provider          | aws         | 3.3.0             | ~>3.0           | 3.9.0            | upgraded       |
+| provider          | aws         | 1.9.0             | >=1.9.0, <2.0.0 |                  | up-to-date     |
 ```
