@@ -142,7 +142,7 @@ def get_github_user_and_repo(source):
 
     return data
 
-def get_valid_versions(source, version, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator, keep_fresh=False, global_bump_level="patch"):
+def get_valid_versions(source, version, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator):
     """
     Takes in module version and constraint information to create a list of valid versions
     """
