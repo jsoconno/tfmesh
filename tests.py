@@ -81,7 +81,7 @@ class TestCore(unittest.TestCase):
         """
         a = (1, 5, 0)
         b = (1, 5, 10)
-        c = (1, 6)
+        c = (1, 4)
         d = (1,)
 
         result = (
@@ -93,7 +93,7 @@ class TestCore(unittest.TestCase):
             compare_versions(b, ">", a) and
             compare_versions(b, "<=", b) and
             compare_versions(b, "~>", a) and
-            compare_versions(c, "~>", b)
+            compare_versions(b, "~>", c)
         )
 
         self.assertTrue(result)
