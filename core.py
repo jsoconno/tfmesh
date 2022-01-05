@@ -157,19 +157,22 @@ def get_github_user_and_repo(source):
 
     return data
 
-def get_valid_versions(source, version, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator):
+def get_valid_versions(target, source, version, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator):
     """
     Takes in dependency version and constraint information to create a list of valid versions
     """
+    # Get required environment variables
+    github_token = os.environ["PAT_TOKEN"]
+
     # Pull available versions
-    if dependency["target"] == "module (git)":
+    if target == "module (git)":
         data = get_github_user_and_repo(source)
         available_versions = get_github_module_versions(data["user"], data["repo"], token=github_token)
-    elif dependency["target"] == "module (registry)":
+    elif target == "module (registry)":
         available_versions = get_terraform_module_versions(source)
-    elif dependency["target"] == "provider":
+    elif target == "provider":
         available_versions = get_terraform_provider_versions(source)
-    elif dependency["target"] == "terraform":
+    elif target == "terraform":
         available_versions = get_terraform_versions()
     else:
         print('what happened?')
@@ -258,40 +261,3 @@ def update_version(file_path, code, current_tag, latest_tag):
     # Write the file out again
     with open(file_path, 'w') as f:
         f.write(data)
-
-github_token = os.environ["PAT_TOKEN"]
-files = get_terraform_files("terraform")
-dependencies = get_dependencies(files)
-
-table_headers = ["resource type", "name", "config version", "constraint", "latest version", "status"]
-table = []
-
-for dependency in dependencies:
-    current_version = dependency["version"]
-    valid_versions = get_valid_versions(
-        dependency["source"], 
-        dependency["version"], 
-        dependency["lower_constraint"], 
-        dependency["lower_constraint_operator"], 
-        dependency["upper_constraint"], 
-        dependency["upper_constraint_operator"]
-    )
-    latest_version = get_latest_version(valid_versions)
-
-    if current_version != latest_version and dependency["constraint"] == "":
-        status = f"{color('ok_blue')}pinned-outdated{color()}"
-    elif current_version != latest_version:
-        update_version(dependency["file_path"], dependency["code"], current_version, latest_version)
-        if compare_versions(get_semantic_version(current_version), ">", get_semantic_version(latest_version)):
-            status = f"{color('ok_cyan')}downgraded{color()}"
-        else:
-            status = f"{color('ok_green')}upgraded{color()}"
-    else:
-        status = f"up-to-date"
-        latest_version = None
-        
-    table.append([dependency["target"], dependency["name"], current_version, dependency["constraint"], latest_version, status])
-
-print('\n')
-print(tabulate(table, headers=table_headers, tablefmt='orgtbl'))
-print('\n')
