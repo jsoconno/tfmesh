@@ -2,3 +2,4 @@ commitizen:
   name: cz_conventional_commits
   tag_format: $version
   version: 0.1.1
+  update_changelog_on_bump: true
