@@ -50,7 +50,15 @@ class TestCore(unittest.TestCase):
         actual = get_latest_version(versions)
         expected = "v1.0.0"
 
-        self.assertEqual(actual, expected)
+    def test_get_latest_version_with_none_type(self):
+        """
+        Test that function returns the latest version.
+        """
+        versions = []
+
+        result = get_latest_version(versions)
+
+        self.assertIsNone(result)
 
     def test_version_tuple(self):
         """
@@ -74,6 +82,8 @@ class TestCore(unittest.TestCase):
         a = (1, 5, 0)
         b = (1, 5, 10)
         c = (1, 6)
+        d = (1,)
+
         result = (
             compare_versions(a, "=", a) and
             compare_versions(b, "", b) and
@@ -85,18 +95,46 @@ class TestCore(unittest.TestCase):
             compare_versions(b, "~>", a) and
             compare_versions(c, "~>", b)
         )
+
         self.assertTrue(result)
+
+    def test_compare_versions_with_none_types(self):
+        """
+        Test that null values passed to compare_versions result in a value of False.
+        """
+        a = (1, 5, 0)
+        b = (1, 5, 10)
+
+        result = (
+            compare_versions(a, "=", ()) and
+            compare_versions("", "=", b)
+        )
+
+        self.assertFalse(result)
+
+    def test_compare_versions_with_invalid_pessimistic_constraint(self):
+        """
+        Test that null values passed to compare_versions result in a value of False.
+        """
+        a = (1, 5, 10)
+        b = (1,)
+        with self.assertRaises(ValueError):
+            compare_versions(a, "~>", b)
 
     def test_get_allowed_versions_no_constraints(self):
         """
         Test passing no constraints.  It should return all available versions.
         """
         available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
-        lower_constraint = ""
-        lower_constraint_operator = ""
-        upper_constraint = ""
-        upper_constraint_operator = ""
-        self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), available_versions)
+        self.assertEqual(get_allowed_versions(available_versions), available_versions)
+
+    def test_get_allowed_versions_lower_constraint_no_operator(self):
+        """
+        Test passing a lower constraint with no operator.  Should result an equal operator (=).
+        """
+        available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
+        lower_constraint = (0, 1, 3)
+        self.assertEqual(get_allowed_versions(available_versions, lower_constraint), ["v0.1.3"])
 
     def test_get_allowed_versions_one_constraint(self):
         """
@@ -105,9 +143,7 @@ class TestCore(unittest.TestCase):
         available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
         lower_constraint = (2, 0, 0)
         lower_constraint_operator = ">"
-        upper_constraint = ""
-        upper_constraint_operator = ""
-        self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), ["v2.0.1", "v2.1.0"])
+        self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator), ["v2.0.1", "v2.1.0"])
 
     def test_get_allowed_versions_two_constraints(self):
         """

@@ -8,6 +8,10 @@ table = []
 
 for dependency in dependencies:
     available_versions = get_available_versions(dependency["target"], dependency["source"])
+    print(dependency["name"])
+    print('-----------')
+    print(dependency["lower_constraint"])
+    print(dependency["lower_constraint_operator"])
     allowed_versions = get_allowed_versions(
         available_versions,
         dependency["lower_constraint"],
@@ -15,9 +19,6 @@ for dependency in dependencies:
         dependency["upper_constraint"],
         dependency["upper_constraint_operator"],
     )
-    if dependency["name"] == "azurerm":
-        print(available_versions)
-        print(allowed_versions)
 
     # Versions
     current_version = dependency["version"]

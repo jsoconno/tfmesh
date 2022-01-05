@@ -179,7 +179,7 @@ def get_available_versions(target, source):
 
     return available_versions
 
-def get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator):
+def get_allowed_versions(available_versions, lower_constraint="", lower_constraint_operator="", upper_constraint="", upper_constraint_operator=""):
     """
     Takes a list of available versions and considers constraints to get a list of allowed versions.
     """
