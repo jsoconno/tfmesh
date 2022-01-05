@@ -73,6 +73,7 @@ class TestCore(unittest.TestCase):
         """
         a = (1, 5, 0)
         b = (1, 5, 10)
+        c = (1, 6)
         result = (
             compare_versions(a, "=", a) and
             compare_versions(b, "", b) and
@@ -81,7 +82,8 @@ class TestCore(unittest.TestCase):
             compare_versions(a, "<=", a) and
             compare_versions(b, ">", a) and
             compare_versions(b, "<=", b) and
-            compare_versions(b, "~>", a)
+            compare_versions(b, "~>", a) and
+            compare_versions(c, "~>", b)
         )
         self.assertTrue(result)
 
@@ -107,7 +109,7 @@ class TestCore(unittest.TestCase):
         upper_constraint_operator = ""
         self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), ["v2.0.1", "v2.1.0"])
 
-    def test_get_allowed_versions_ge_lt(self):
+    def test_get_allowed_versions_two_constraints(self):
         """
         Test passing a lower and upper constraint.
         """
