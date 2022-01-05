@@ -6,6 +6,21 @@ import re
 import operator
 from tabulate import tabulate
 
+def color(color="end"):
+    colors = {
+        "header": "\033[95m",
+        "ok_blue": "\033[94m",
+        "ok_cyan": "\033[96m",
+        "ok_green": "\033[92m",
+        "warning": "\033[93m",
+        "fail": "\033[91m",
+        "end": "\033[0m",
+        "bold": "\033[1m",
+        "underline": "\033[4m",
+    }
+
+    return colors[color]
+
 def get_terraform_files(terraform_folder=None, file_pattern='*.tf'):
     """
     Get a list of absolute paths to terraform files matching the given pattern.
@@ -248,7 +263,7 @@ github_token = os.environ["PAT_TOKEN"]
 files = get_terraform_files("terraform")
 dependencies = get_dependencies(files)
 
-table_headers = ["target", "name", "config version", "constraint", "latest version", "status"]
+table_headers = ["resource type", "name", "config version", "constraint", "latest version", "status"]
 table = []
 
 for dependency in dependencies:
@@ -264,17 +279,19 @@ for dependency in dependencies:
     latest_version = get_latest_version(valid_versions)
 
     if current_version != latest_version and dependency["constraint"] == "":
-        status = "pinned - stale"
+        status = f"{color('ok_blue')}pinned-outdated{color()}"
     elif current_version != latest_version:
         update_version(dependency["file_path"], dependency["code"], current_version, latest_version)
         if compare_versions(get_semantic_version(current_version), ">", get_semantic_version(latest_version)):
-            status = "downgraded"
+            status = f"{color('ok_cyan')}downgraded{color()}"
         else:
-            status = "upgraded"
+            status = f"{color('ok_green')}upgraded{color()}"
     else:
-        status = "up-to-date"
+        status = f"up-to-date"
         latest_version = None
         
     table.append([dependency["target"], dependency["name"], current_version, dependency["constraint"], latest_version, status])
 
+print('\n')
 print(tabulate(table, headers=table_headers, tablefmt='orgtbl'))
+print('\n')
