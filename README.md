@@ -1,6 +1,19 @@
 # TFMesh
 The built-for-purpose Terraform dependency manager.  TFMesh provides a simple and powerful CLI that allows you to get configuration version details and make updates that naturally integrates with current CI/CD processes.
 
+# Badges
+[![codecov](https://codecov.io/gh/Jsoconno/tfmesh/branch/master/graph/badge.svg?token=BW4GBBD7Y5)](https://codecov.io/gh/Jsoconno/tfmesh)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jsoconno/tfmesh/Publish%20to%20Codecov?label=tests)
+
+![GitHub commit activity](https://img.shields.io/github/commit-activity/y/jsoconno/tfmesh)
+![Lines of code](https://img.shields.io/tokei/lines/github/jsoconno/tfmesh)
+![GitHub issues](https://img.shields.io/github/v/tag/jsoconno/tfmesh)
+![GitHub issues](https://img.shields.io/github/issues/jsoconno/tfmesh)
+![GitHub closed issues](https://img.shields.io/github/issues-closed/jsoconno/tfmesh)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/jsoconno/tfmesh)
+![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/jsoconno/tfmesh)
+![GitHub contributors](https://img.shields.io/github/contributors/jsoconno/tfmesh)
+
 # Development Roadmap
 This project is under active development.  This section outlines the capability roadmap for TFMesh.  This will be taken down once the initial version of the tool is released into the wild.
 
