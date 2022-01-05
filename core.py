@@ -157,9 +157,9 @@ def get_github_user_and_repo(source):
 
     return data
 
-def get_valid_versions(target, source, version, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator):
+def get_available_versions(target, source):
     """
-    Takes in dependency version and constraint information to create a list of valid versions
+    Gets a list of available versions based on API calls to various endpoints.
     """
     # Get required environment variables
     github_token = os.environ["PAT_TOKEN"]
@@ -175,8 +175,14 @@ def get_valid_versions(target, source, version, lower_constraint, lower_constrai
     elif target == "terraform":
         available_versions = get_terraform_versions()
     else:
-        print('what happened?')
+        available_versions = None
 
+    return available_versions
+
+def get_allowed_versions(available_versions, lower_constraint="", lower_constraint_operator="", upper_constraint="", upper_constraint_operator=""):
+    """
+    Takes a list of available versions and considers constraints to get a list of allowed versions.
+    """
     if lower_constraint and not lower_constraint_operator:
         lower_constraint_operator = "="
 
@@ -237,12 +243,15 @@ def compare_versions(a, op, b):
 
     return result
 
-def get_latest_version(version_list):
+def get_latest_version(versions):
     """
     Provides the latest version based on a list of provided versions.
     """
-    version_list.sort(reverse=True)
-    latest_version = version_list[0]
+    if versions:
+        versions.sort(reverse=True)
+        latest_version = versions[0]
+    else:
+        latest_version = None
 
     return latest_version
 
