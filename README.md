@@ -143,3 +143,5 @@ tfmesh update all
 | provider          | aws         | 3.3.0            | ~>3.0           | 3.9.0            | upgraded       |
 | provider          | aws         | 1.9.0            | >=1.9.0, <2.0.0 |                  | up-to-date     |
 ```
+
+Test Commitizen
