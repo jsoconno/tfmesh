@@ -1,0 +1,4 @@
+# .coeragerc to control tests
+[run]
+omit = 
+    */opt/homebrew/*

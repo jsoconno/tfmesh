@@ -1,14 +1,6 @@
 import unittest
 import pathlib
-from core import (
-    get_terraform_files,
-    get_semantic_version,
-    get_github_module_versions,
-    get_terraform_provider_versions,
-    get_latest_version,
-    version_tuple,
-    compare_versions,
-)
+from core import *
 
 class TestCore(unittest.TestCase):
     def test_get_terraform_files(self):
@@ -80,6 +72,9 @@ class TestCore(unittest.TestCase):
         Test that version comparisons work correctly.
         """
         pass
+
+    def test_color(self):
+        self.assertEqual(color("ok_blue"), "\033[94m")
 
 if __name__ == '__main__':
     unittest.main()
