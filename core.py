@@ -158,6 +158,9 @@ def get_github_user_and_repo(source):
     return data
 
 def get_available_versions(target, source):
+    """
+    Gets a list of available versions based on API calls to various endpoints.
+    """
     # Get required environment variables
     github_token = os.environ["PAT_TOKEN"]
 

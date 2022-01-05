@@ -71,7 +71,53 @@ class TestCore(unittest.TestCase):
         """
         Test that version comparisons work correctly.
         """
-        pass
+        a = (1, 5, 0)
+        b = (1, 5, 10)
+        result = (
+            compare_versions(a, "=", a) and
+            compare_versions(b, "", b) and
+            compare_versions(a, "!=", b) and
+            compare_versions(a, "<", b) and
+            compare_versions(a, "<=", a) and
+            compare_versions(b, ">", a) and
+            compare_versions(b, "<=", b) and
+            compare_versions(b, "~>", a)
+        )
+        self.assertTrue(result)
+
+    def test_get_allowed_versions_no_constraints(self):
+        """
+        Test passing no constraints.  It should return all available versions.
+        """
+        available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
+        lower_constraint = ""
+        lower_constraint_operator = ""
+        upper_constraint = ""
+        upper_constraint_operator = ""
+        self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), available_versions)
+
+    def test_get_allowed_versions_one_constraint(self):
+        """
+        Test passing a lower constraint.
+        """
+        available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
+        lower_constraint = (2, 0, 0)
+        lower_constraint_operator = ">"
+        upper_constraint = ""
+        upper_constraint_operator = ""
+        self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), ["v2.0.1", "v2.1.0"])
+
+    def test_get_allowed_versions_ge_lt(self):
+        """
+        Test passing a lower and upper constraint.
+        """
+        available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
+        lower_constraint = (2, 0, 0)
+        lower_constraint_operator = ">="
+        upper_constraint = (2, 1, 0)
+        upper_constraint_operator = "<"
+        self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), ["v2.0.0", "v2.0.1"])
+    
 
     def test_color(self):
         self.assertEqual(color("ok_blue"), "\033[94m")
