@@ -22,10 +22,10 @@ for dependency in dependencies:
     latest_allowed_version = get_latest_version(allowed_versions)
 
     status = get_status(current_version, latest_available_version, latest_allowed_version)
-    what_if = False
+    dry_run = True
 
     if compare_versions(get_semantic_version(current_version), "!=", get_semantic_version(latest_allowed_version)):
-        if what_if:
+        if dry_run:
             pass
         else:
             update_version(dependency["file_path"], dependency["code"], current_version, latest_allowed_version)
