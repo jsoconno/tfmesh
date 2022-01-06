@@ -25,10 +25,15 @@ jobs:
         with:
           python-version: 3.8
       - name: Update Terraform Dependencies
+        id: tfmesh
         run: |
           pip install requests
           pip install tabulate
-          python main.py
+          output=$(python main.py)
+          output="${output//'%'/'%25'}"
+          output="${output//$'\n'/'%0A'}"
+          output="${output//$'\r'/'%0D'}"
+          echo "::set-output name=changelog::$output"
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
       - name: Create Pull Request
@@ -45,6 +50,6 @@ jobs:
           body: |
             Module versions were automatically updated based on the latest versions available.
 
-            ${{ env.TABLE }}
+            ${{ steps.tfmesh.outputs.changelog }}
           add-paths: |
             **/*.tf
