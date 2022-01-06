@@ -5,7 +5,7 @@ dry_run = False
 files = get_terraform_files("terraform")
 dependencies = get_dependencies(files)
 
-table_headers = ["resource type", "name", "current version", "latest available", "constraint", "latest allowed", "status"]
+table_headers = ["resource type", "module name", "current version", "latest available", "constraint", "latest allowed", "status"]
 table = []
 
 for dependency in dependencies:

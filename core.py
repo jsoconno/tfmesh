@@ -297,19 +297,19 @@ def get_status(current_version, latest_available_version, latest_allowed_version
     latest_allowed_version = get_semantic_version(latest_allowed_version)
 
     if latest_allowed_version == None:
-        status = f"{color('fail')}(x) no suitable version{color()}"
+        status = "(x) no suitable version"
     elif compare_versions(current_version, "=", latest_available_version) and compare_versions(current_version, "=", latest_allowed_version):
-        status = f"{color('ok_green')}(*) up-to-date{color()}"
+        status = "(*) up-to-date"
     elif compare_versions(current_version, "!=", latest_available_version) and compare_versions(current_version, "=", latest_allowed_version):
-        status = f"{color('warning')}(.) version pinned{color()}"
+        status = "(.) version pinned"
     elif compare_versions(current_version, "<", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
-        status = f"{color('ok_green')}(->) upgraded to latest{color()}"
+        status = "(->) upgraded to latest"
     elif compare_versions(current_version, "<", latest_available_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
-        status = f"{color('warning')}(>) upgraded to allowed{color()}"
+        status = "(>) upgraded to allowed"
     elif compare_versions(current_version, ">", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
-        status = f"{color('ok_green')}(<-) downgraded to latest{color()}"
+        status = "(<-) downgraded to latest"
     elif compare_versions(current_version, ">", latest_allowed_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
-        status = f"{color('warning')}(<) downgraded to allowed{color()}"
+        status = "(<) downgraded to allowed"
     else:
         status = f"{color('fail')}(!) you found a bug{color()}"
 
