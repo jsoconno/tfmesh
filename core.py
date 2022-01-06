@@ -38,10 +38,13 @@ def get_semantic_version(version):
     """
     Get a dictionary of the semantic version components including major, minor, patch, and pre-release.
     """
-    regex_pattern = r'((\d+)\.*(\d+)*\.*(\d+)*-?([\S]*))'
-    # regex_pattern = r"(\d*)\.(\d*)\.?(\d*)[^a-zA-Z\d\s:]?(.*)"
-    # Get first match and first result
-    version = re.findall(regex_pattern, version)[0][0]
+    if version:
+        regex_pattern = r'((\d+)\.*(\d+)*\.*(\d+)*-?([\S]*))'
+        # regex_pattern = r"(\d*)\.(\d*)\.?(\d*)[^a-zA-Z\d\s:]?(.*)"
+        # Get first match and first result
+        version = re.findall(regex_pattern, version)[0][0]
+    else:
+        version = None
 
     return version_tuple(version)
 
@@ -270,3 +273,35 @@ def update_version(file_path, code, current_tag, latest_tag):
     # Write the file out again
     with open(file_path, 'w') as f:
         f.write(data)
+
+def get_status(current_version, latest_available_version, latest_allowed_version):
+    """
+    Takes version details and outputs the status as a string.
+    """
+    current_version = get_semantic_version(current_version)
+    latest_available_version = get_semantic_version(latest_available_version)
+    latest_allowed_version = get_semantic_version(latest_allowed_version)
+
+    if latest_allowed_version == None:
+        latest_allowed_version = (0, 0, 0)
+
+    print(current_version, latest_available_version, latest_allowed_version)
+
+    if latest_allowed_version is (0, 0, 0):
+        status = f"{color('fail')}(x) no suitable version{color()}"
+    elif compare_versions(current_version, "=", latest_available_version):
+        status = f"{color('ok_green')}(*) up-to-date{color()}"
+    elif compare_versions(current_version, "=", latest_allowed_version):
+        status = f"{color('warning')}(.) version pinned{color()}"
+    elif compare_versions(latest_available_version, "=", latest_allowed_version) and compare_versions(current_version, "<", latest_available_version):
+        status = f"{color('ok_green')}(->) upgraded to latest{color()}"
+    elif compare_versions(latest_available_version, ">", latest_allowed_version) and compare_versions(current_version, "<", latest_available_version):
+        status = f"{color('warning')}(>) upgraded to allowed{color()}"
+    elif compare_versions(current_version, ">", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
+        status = f"{color('ok_green')}(<-) downgraded to latest{color()}"
+    elif compare_versions(current_version, ">", latest_available_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
+        status = f"{color('warning')}(<) downgraded to allowed{color()}"
+    else:
+        status = "wha???"
+
+    return status

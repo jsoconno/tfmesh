@@ -47,7 +47,7 @@ module "api_gateway" {
 }
 
 module "lambda" {
-  source = "github.com/jsoconno/terraform-module-aws-lambda?ref=v1.1.2" # >=1.0.0, <2.0.0
+  source = "github.com/jsoconno/terraform-module-aws-lambda?ref=v1.1.2" # >=1.0.0, <1.1.2
   #   source = "../terraform-module-aws-lambda"
 
   name = "test-lambda"
@@ -66,7 +66,7 @@ module "lambda" {
 
 module "consul" {
   source = "hashicorp/consul/aws"
-  version = "0.5.0" # >=0.2.0, <0.6.0
+  version = "0.4.0" # >=0.2.0, <0.6.0
 }
 
 module "conventions" {
@@ -85,7 +85,7 @@ module "consul" {
 }
 
 module "s3" {
-  source = "github.com/jsoconno/terraform-module-aws-s3?ref=v1.1.0" # ~>1.0
+  source = "github.com/jsoconno/terraform-module-aws-s3?ref=v2.1.0" # >=1.0.0
 # source = "../terraform-module-aws-s3"
 
   s3_access_iam_role_names = [
