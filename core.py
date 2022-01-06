@@ -281,17 +281,17 @@ def get_status(current_version, latest_available_version, latest_allowed_version
 
     if latest_allowed_version == None:
         status = f"{color('fail')}(x) no suitable version{color()}"
-    elif compare_versions(current_version, "=", latest_available_version):
+    elif compare_versions(current_version, "=", latest_available_version) and compare_versions(current_version, "=", latest_allowed_version):
         status = f"{color('ok_green')}(*) up-to-date{color()}"
-    elif compare_versions(current_version, "=", latest_allowed_version):
+    elif compare_versions(current_version, "!=", latest_available_version) and compare_versions(current_version, "=", latest_allowed_version):
         status = f"{color('warning')}(.) version pinned{color()}"
-    elif compare_versions(latest_available_version, "=", latest_allowed_version) and compare_versions(current_version, "<", latest_available_version):
+    elif compare_versions(current_version, "<", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
         status = f"{color('ok_green')}(->) upgraded to latest{color()}"
-    elif compare_versions(latest_available_version, ">", latest_allowed_version) and compare_versions(current_version, "<", latest_available_version):
+    elif compare_versions(current_version, "<", latest_available_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
         status = f"{color('warning')}(>) upgraded to allowed{color()}"
     elif compare_versions(current_version, ">", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
         status = f"{color('ok_green')}(<-) downgraded to latest{color()}"
-    elif compare_versions(current_version, ">", latest_available_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
+    elif compare_versions(current_version, ">", latest_allowed_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
         status = f"{color('warning')}(<) downgraded to allowed{color()}"
     else:
         status = f"{color('fail')}(!) you found a bug{color()}"
