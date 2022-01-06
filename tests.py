@@ -155,10 +155,94 @@ class TestCore(unittest.TestCase):
         upper_constraint = (2, 1, 0)
         upper_constraint_operator = "<"
         self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), ["v2.0.0", "v2.0.1"])
-    
 
     def test_color(self):
         self.assertEqual(color("ok_blue"), "\033[94m")
+
+    def test_get_status_up_to_date(self):
+        """
+        Test that the correct version change status is returned ((*) up-to-date).
+        """
+        current_version = "1.0.0"
+        latest_available_version = "1.0.0"
+        latest_allowed_version = "1.0.0"
+
+        status = get_status(current_version, latest_available_version, latest_allowed_version)
+
+        self.assertIn("(*) up-to-date", status)
+
+    def test_get_status_upgraded_to_latest(self):
+        """
+        Test that the correct version change status is returned ((->) upgraded to latest).
+        """
+        current_version = "1.0.0"
+        latest_available_version = "2.0.0"
+        latest_allowed_version = "2.0.0"
+
+        status = get_status(current_version, latest_available_version, latest_allowed_version)
+
+        self.assertIn("(->) upgraded to latest", status)
+
+    def test_get_status_upgraded_to_allowed(self):
+        """
+        Test that the correct version change status is returned ((>) upgraded to allowed).
+        """
+        current_version = "1.0.0"
+        latest_available_version = "3.0.0"
+        latest_allowed_version = "2.0.0"
+
+        status = get_status(current_version, latest_available_version, latest_allowed_version)
+
+        self.assertIn("(>) upgraded to allowed", status)
+
+    def test_get_status_downgraded_to_latest(self):
+        """
+        Test that the correct version change status is returned ((<-) downgraded to latest).
+        """
+        current_version = "3.0.0"
+        latest_available_version = "2.0.0"
+        latest_allowed_version = "2.0.0"
+
+        status = get_status(current_version, latest_available_version, latest_allowed_version)
+
+        self.assertIn("(<-) downgraded to latest", status)
+
+    def test_get_status_downgraded_to_allowed(self):
+        """
+        Test that the correct version change status is returned ((<) downgraded to allowed).
+        """
+        current_version = "3.0.0"
+        latest_available_version = "2.0.0"
+        latest_allowed_version = "1.0.0"
+
+        status = get_status(current_version, latest_available_version, latest_allowed_version)
+
+        self.assertIn("(<) downgraded to allowed", status)
+
+    def test_get_status_pinned(self):
+        """
+        Test that the correct version change status is returned ((.) version pinned).
+        """
+        current_version = "1.0.0"
+        latest_available_version = "2.0.0"
+        latest_allowed_version = "1.0.0"
+
+        status = get_status(current_version, latest_available_version, latest_allowed_version)
+
+        self.assertIn("(.) version pinned", status)
+
+    def test_get_status_no_suitable_version(self):
+        """
+        Test that the correct version change status is returned ((x) no suitable version).
+        """
+        current_version = "1.0.0"
+        latest_available_version = "1.0.0"
+        latest_allowed_version = None
+
+        status = get_status(current_version, latest_available_version, latest_allowed_version)
+
+        self.assertIn("(x) no suitable version", status)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -74,6 +74,23 @@ Feature requirements:
 ## Raise a Pull Request
 * Raise a pull request in the Git repo where the Terraform code lives
 
+# Version Status
+TFMesh will evaluate versions in your configuration to determine the current version, latest available version, and latest allowed version.
+
+* `current version` - The current version set in the configuration.
+* `latest available version` - The latest available version available for Terraform or a given provider or module.
+* `latest allowed version` - The latest version that is allowed based on constraints in the configuration.
+
+The supported status are:
+
+* `(*) up-to-date` - The `current version` matches the `latest available version`.
+* `(->) upgraded to latest` - The `current version` was upgraded to the `latest available version`.
+* `(>)upgraded to allowed` - The `current version` was upgraded to the `latest allowed version` and is behind.
+* `(<-) downgraded to latest` - The `current version` was downgraded to the `latest available version`.
+* `(<) downgraded to allowed` - The `current version` was downgraded to the `latest allowed version` and is behind.
+* `(.) version pinned` - The `current version` is pinned and is behind.
+* `(x) no suitable version` - The was no available version that met the provided constraints.
+
 # TFMesh CLI
 The tfmesh cli provides a convenient way of working with version updates in Terraform that is suited for local development or CI/CD pipelines.
 
