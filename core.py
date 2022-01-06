@@ -204,18 +204,6 @@ def get_allowed_versions(available_versions, lower_constraint="", lower_constrai
 
     # Apply logic to select the correct bump
 
-def version_tuple(version):
-    """
-    Turns a semantic version value into a tuple used for version comparison operations.
-    """
-    try:
-        version = tuple(map(int, (version.split("."))))
-    except:
-        # Added to fix a breaking change for pre-release versions.
-        version = None
-
-    return version
-
 def compare_versions(a, op, b):
     """
     Takes two tuples and compares them based on valid operations.
