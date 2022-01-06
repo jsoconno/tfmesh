@@ -8,7 +8,6 @@ table = []
 
 for dependency in dependencies:
     available_versions = get_available_versions(dependency["target"], dependency["source"])
-    # print(dependency["name"])
     allowed_versions = get_allowed_versions(
         available_versions,
         dependency["lower_constraint"],

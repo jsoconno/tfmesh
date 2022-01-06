@@ -38,15 +38,16 @@ def get_semantic_version(version):
     """
     Get a dictionary of the semantic version components including major, minor, patch, and pre-release.
     """
-    if version:
-        regex_pattern = r'((\d+)\.*(\d+)*\.*(\d+)*-?([\S]*))'
-        # regex_pattern = r"(\d*)\.(\d*)\.?(\d*)[^a-zA-Z\d\s:]?(.*)"
-        # Get first match and first result
-        version = re.findall(regex_pattern, version)[0][0]
-    else:
+    regex_pattern = r'((0|[1-9]\d*)\.*(0|[1-9]\d*)*\.*(0|[1-9]\d*)*(?:-(?:((?:[a-zA-Z]*(\d*)))))?)'
+
+    try:
+        version = re.findall(regex_pattern, version)[0]
+        component_list = [int(component) for component in [version[1], version[2], version[3], version[5]] if component != '']
+        version = tuple(component_list)
+    except:
         version = None
 
-    return version_tuple(version)
+    return version
 
 def get_github_module_versions(user, repo, token=None):
     """
@@ -139,9 +140,9 @@ def get_dependencies(terraform_files):
                         "version": result[3],
                         "constraint": result[4],
                         "lower_constraint_operator": result[5],
-                        "lower_constraint": version_tuple(result[6]),
+                        "lower_constraint": result[6],
                         "upper_constraint_operator": result[7],
-                        "upper_constraint": version_tuple(result[8])
+                        "upper_constraint": result[8]
                     }
                     dependencies.append(data)
     
@@ -190,16 +191,14 @@ def get_allowed_versions(available_versions, lower_constraint="", lower_constrai
         lower_constraint_operator = "="
 
     if lower_constraint and lower_constraint_operator and upper_constraint and upper_constraint_operator:
-        allowed_versions = [version for version in available_versions if compare_versions(get_semantic_version(version), lower_constraint_operator, lower_constraint) and compare_versions(get_semantic_version(version), upper_constraint_operator, upper_constraint)]
+        allowed_versions = [version for version in available_versions if compare_versions(get_semantic_version(version), lower_constraint_operator, get_semantic_version(lower_constraint)) and compare_versions(get_semantic_version(version), upper_constraint_operator, get_semantic_version(upper_constraint))]
     elif lower_constraint and lower_constraint_operator:
-        allowed_versions = [version for version in available_versions if compare_versions(get_semantic_version(version), lower_constraint_operator, lower_constraint)]
+        allowed_versions = [version for version in available_versions if compare_versions(get_semantic_version(version), lower_constraint_operator, get_semantic_version(lower_constraint))]
     else:
         # Ensures that pre-release versions are removed if there are no constraints.
         allowed_versions = [version for version in available_versions if get_semantic_version(version)]
 
     # Add logic that applies global filters
-
-    allowed_versions.sort()
 
     return allowed_versions
 
@@ -246,15 +245,26 @@ def compare_versions(a, op, b):
 
     return result
 
+def sort_versions(versions):
+    """
+    Sorts lists of versions based on the semantic version.  Normal sort does not work because of versions like 1.67.0 vs. 1.9.0.
+    """
+    tuple_versions = [get_semantic_version(version) for version in versions]
+    versions = [x for _, x in sorted(zip(tuple_versions, versions), reverse=True)]
+
+    return versions
+
+
 def get_latest_version(versions):
     """
     Provides the latest version based on a list of provided versions.
     """
     if versions:
-        versions.sort(reverse=True)
+        versions = sort_versions(versions)
         latest_version = versions[0]
     else:
-        latest_version = None
+        print('hit')
+        latest_version = ''
 
     return latest_version
 
@@ -283,9 +293,6 @@ def get_status(current_version, latest_available_version, latest_allowed_version
     latest_allowed_version = get_semantic_version(latest_allowed_version)
 
     if latest_allowed_version == None:
-        latest_allowed_version = (0, 0, 0)
-
-    if latest_allowed_version is (0, 0, 0):
         status = f"{color('fail')}(x) no suitable version{color()}"
     elif compare_versions(current_version, "=", latest_available_version):
         status = f"{color('ok_green')}(*) up-to-date{color()}"
@@ -300,6 +307,6 @@ def get_status(current_version, latest_available_version, latest_allowed_version
     elif compare_versions(current_version, ">", latest_available_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
         status = f"{color('warning')}(<) downgraded to allowed{color()}"
     else:
-        status = "wha???"
+        status = f"{color('fail')}(!) you found a bug{color()}"
 
     return status
