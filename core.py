@@ -233,6 +233,23 @@ def compare_versions(a, op, b):
 
     return result
 
+def tuple_math(a, op, b):
+    """
+    Allows basic tuple math.
+    """
+    ops = {
+        '+' : operator.add,
+        '-' : operator.sub,
+        '*' : operator.mul,
+        '/' : operator.truediv,  # use operator.div for Python 2
+        '%' : operator.mod,
+        '^' : operator.xor,
+    }
+
+    result = tuple(map(ops[op], a, b))
+
+    return result
+
 def sort_versions(versions):
     """
     Sorts lists of versions based on the semantic version.  Normal sort does not work because of versions like 1.67.0 vs. 1.9.0.

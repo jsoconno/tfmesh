@@ -3,7 +3,7 @@ from core import *
 files = get_terraform_files("terraform")
 dependencies = get_dependencies(files)
 
-table_headers = ["resource type", "name", "current version", "latest version", "constraint", "latest allowed version", "status"]
+table_headers = ["resource\ntype", "name", "current\nversion", "latest\navailable", "constraint", "latest\nallowed", "status"]
 table = []
 
 for dependency in dependencies:
@@ -22,7 +22,7 @@ for dependency in dependencies:
     latest_allowed_version = get_latest_version(allowed_versions)
 
     status = get_status(current_version, latest_available_version, latest_allowed_version)
-    what_if = True
+    what_if = False
 
     if compare_versions(get_semantic_version(current_version), "!=", get_semantic_version(latest_allowed_version)):
         if what_if:
