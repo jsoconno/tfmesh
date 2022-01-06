@@ -229,6 +229,15 @@ class TestCore(unittest.TestCase):
 
         self.assertIn("(x) no suitable version", status)
 
+    def test_sort_versions(self):
+        """
+        Test that versions are properly sorted based on semantic version.
+        """
+        versions = ["1.0.0", "1.1.1", "1.10.0", "1.9.0", "2.0"]
+        result = sort_versions(versions)
+
+        self.assertEqual(result, ["2.0", "1.10.0", "1.9.0", "1.1.1", "1.0.0"])
+
 
 if __name__ == '__main__':
     unittest.main()
