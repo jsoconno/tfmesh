@@ -1,0 +1,49 @@
+name: Terraform Dependency Manager
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    # runs the pipeline every hour on the hour
+    - cron:  '0 */24 * * *'
+
+jobs:
+  terradepend:
+    runs-on: ubuntu-latest
+    name: "Automated Module Version Updates"
+    steps:
+      - name: Checkout Repo Content
+        uses: actions/checkout@v2
+      - name: Set Up Agent
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Update Terraform Dependencies
+        run: |
+          pip install requests
+          pip install operators
+          pip install tabulate
+          python main.py
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: "Update Terraform module versions."
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          branch: module-version-updates
+          delete-branch: true
+          title: 'Terraform module version updates'
+          labels: |
+            bot
+          body: |
+            Module versions were automatically updated based on the latest versions available.
+          add-paths: |
+            *.tf
