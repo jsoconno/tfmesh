@@ -33,7 +33,7 @@ for dependency in dependencies:
     table.append([dependency["target"], dependency["name"], current_version, latest_available_version, dependency["constraint"], latest_allowed_version, status])
 
 print('\n')
-if what_if:
+if dry_run:
     print("This is a what if scenario.  No files were updated.")
 print(tabulate(table, headers=table_headers, tablefmt='orgtbl'))
 print('\n')
