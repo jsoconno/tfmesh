@@ -56,7 +56,12 @@ Feature requirements:
 ## Take Into Account User Constraints
 Feature requirements:
 * Allow special comments or configuration files to set constraints using Terraform's existing syntax.
-* Allow for global constrains including `major_bumps_allowed`, `minor_bumps_allowed`, and `patch_bumps_allowed`.
+* Allow for global constrains including:
+  * `max_bump` - values can be `major`, `minor`, or `patch`.
+  * `allow_prerelease` - default is True.
+  * `patch_versions_behind` - number
+  * `minor_versions_behind` - number
+  * `patch_versions_behind` - number
 * Create logic that can determine the minimum and maximium verions based on constraints.
 
 ## Compare Versions

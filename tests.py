@@ -37,9 +37,9 @@ class TestCore(unittest.TestCase):
         """
         Test that a list of versions can be returned from hashicorp for a given provider such as aws, gcp, or azurerm.
         """
-        actual = '3.70.0' in get_terraform_provider_versions(source="hashicorp/aws")
+        provider_versions = get_terraform_provider_versions(source="hashicorp/aws")
 
-        self.assertTrue(actual)
+        self.assertIn('3.70.0', provider_versions)
 
     def test_get_latest_version(self):
         """
@@ -59,21 +59,6 @@ class TestCore(unittest.TestCase):
         result = get_latest_version(versions)
 
         self.assertIsNone(result)
-
-    def test_version_tuple(self):
-        """
-        Test that version strings are properly converted to tuples.
-        """
-        good_version = "1.0.0"
-        bad_version = "v1.0.0"
-
-        good_actual = version_tuple(good_version)
-        good_expected = (1, 0, 0)
-
-        bad_actual = version_tuple(bad_version)
-
-        self.assertEqual(good_actual, good_expected)
-        self.assertIsNone(bad_actual)
 
     def test_compare_versions(self):
         """
@@ -133,7 +118,7 @@ class TestCore(unittest.TestCase):
         Test passing a lower constraint with no operator.  Should result an equal operator (=).
         """
         available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
-        lower_constraint = (0, 1, 3)
+        lower_constraint = "0.1.3"
         self.assertEqual(get_allowed_versions(available_versions, lower_constraint), ["v0.1.3"])
 
     def test_get_allowed_versions_one_constraint(self):
@@ -141,7 +126,7 @@ class TestCore(unittest.TestCase):
         Test passing a lower constraint.
         """
         available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
-        lower_constraint = (2, 0, 0)
+        lower_constraint = "v2.0.0"
         lower_constraint_operator = ">"
         self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator), ["v2.0.1", "v2.1.0"])
 
@@ -150,10 +135,11 @@ class TestCore(unittest.TestCase):
         Test passing a lower and upper constraint.
         """
         available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
-        lower_constraint = (2, 0, 0)
+        lower_constraint = "2.0.0"
         lower_constraint_operator = ">="
-        upper_constraint = (2, 1, 0)
+        upper_constraint = "2.1.0"
         upper_constraint_operator = "<"
+
         self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), ["v2.0.0", "v2.0.1"])
 
     def test_color(self):
@@ -242,6 +228,15 @@ class TestCore(unittest.TestCase):
         status = get_status(current_version, latest_available_version, latest_allowed_version)
 
         self.assertIn("(x) no suitable version", status)
+
+    def test_sort_versions(self):
+        """
+        Test that versions are properly sorted based on semantic version.
+        """
+        versions = ["1.0.0", "1.1.1", "1.10.0", "1.9.0", "2.0"]
+        result = sort_versions(versions)
+
+        self.assertEqual(result, ["2.0", "1.10.0", "1.9.0", "1.1.1", "1.0.0"])
 
 
 if __name__ == '__main__':
