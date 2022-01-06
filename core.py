@@ -251,8 +251,7 @@ def get_latest_version(versions):
         versions = sort_versions(versions)
         latest_version = versions[0]
     else:
-        print('hit')
-        latest_version = ''
+        latest_version = None
 
     return latest_version
 

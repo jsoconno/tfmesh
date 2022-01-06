@@ -37,9 +37,9 @@ class TestCore(unittest.TestCase):
         """
         Test that a list of versions can be returned from hashicorp for a given provider such as aws, gcp, or azurerm.
         """
-        actual = '3.70.0' in get_terraform_provider_versions(source="hashicorp/aws")
+        provider_versions = get_terraform_provider_versions(source="hashicorp/aws")
 
-        self.assertTrue(actual)
+        self.assertIn('3.70.0', provider_versions)
 
     def test_get_latest_version(self):
         """
@@ -118,7 +118,7 @@ class TestCore(unittest.TestCase):
         Test passing a lower constraint with no operator.  Should result an equal operator (=).
         """
         available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
-        lower_constraint = (0, 1, 3)
+        lower_constraint = "0.1.3"
         self.assertEqual(get_allowed_versions(available_versions, lower_constraint), ["v0.1.3"])
 
     def test_get_allowed_versions_one_constraint(self):
@@ -126,7 +126,7 @@ class TestCore(unittest.TestCase):
         Test passing a lower constraint.
         """
         available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
-        lower_constraint = (2, 0, 0)
+        lower_constraint = "v2.0.0"
         lower_constraint_operator = ">"
         self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator), ["v2.0.1", "v2.1.0"])
 
@@ -135,10 +135,11 @@ class TestCore(unittest.TestCase):
         Test passing a lower and upper constraint.
         """
         available_versions = ["v0.1.0","v0.1.1","v0.1.3","v0.1.4","v1.0.0","v1.1.2","v2.0.0","v2.0.1","v2.1.0"]
-        lower_constraint = (2, 0, 0)
+        lower_constraint = "2.0.0"
         lower_constraint_operator = ">="
-        upper_constraint = (2, 1, 0)
+        upper_constraint = "2.1.0"
         upper_constraint_operator = "<"
+
         self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), ["v2.0.0", "v2.0.1"])
 
     def test_color(self):
