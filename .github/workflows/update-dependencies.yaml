@@ -5,10 +5,10 @@ on:
   # but only for the main branch
   push:
     branches:
-      - main
+      - master
   pull_request:
     branches:
-      - main
+      - master
   schedule:
     # runs the pipeline every hour on the hour
     - cron:  '0 */24 * * *'
