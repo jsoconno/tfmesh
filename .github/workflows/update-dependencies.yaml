@@ -27,7 +27,7 @@ jobs:
       - name: Update Terraform Dependencies
         run: |
           pip install requests
-          pip install operators
+          pip install operator
           pip install tabulate
           python main.py
         env:
