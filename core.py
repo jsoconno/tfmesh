@@ -285,8 +285,6 @@ def get_status(current_version, latest_available_version, latest_allowed_version
     if latest_allowed_version == None:
         latest_allowed_version = (0, 0, 0)
 
-    print(current_version, latest_available_version, latest_allowed_version)
-
     if latest_allowed_version is (0, 0, 0):
         status = f"{color('fail')}(x) no suitable version{color()}"
     elif compare_versions(current_version, "=", latest_available_version):
