@@ -5,7 +5,7 @@ dry_run = False
 files = get_terraform_files("terraform")
 dependencies = get_dependencies(files)
 
-table_headers = ["resource\ntype", "name", "current\nversion", "latest\navailable", "constraint", "latest\nallowed", "status"]
+table_headers = ["resource type", "name", "current version", "latest available", "constraint", "latest allowed", "status"]
 table = []
 
 for dependency in dependencies:
@@ -36,6 +36,6 @@ for dependency in dependencies:
 print('\n')
 if dry_run:
     print("This is a what if scenario.  No files were updated.")
-table = tabulate(table, headers=table_headers, tablefmt='orgtbl')
+table = tabulate(table, headers=table_headers, tablefmt='github')
 print(table)
 print('\n')
