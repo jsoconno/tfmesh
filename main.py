@@ -1,5 +1,7 @@
 from core import *
 
+dry_run = False
+
 files = get_terraform_files("terraform")
 dependencies = get_dependencies(files)
 
@@ -22,7 +24,6 @@ for dependency in dependencies:
     latest_allowed_version = get_latest_version(allowed_versions)
 
     status = get_status(current_version, latest_available_version, latest_allowed_version)
-    dry_run = True
 
     if compare_versions(get_semantic_version(current_version), "!=", get_semantic_version(latest_allowed_version)):
         if dry_run:
