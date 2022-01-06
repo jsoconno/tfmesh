@@ -60,21 +60,6 @@ class TestCore(unittest.TestCase):
 
         self.assertIsNone(result)
 
-    def test_version_tuple(self):
-        """
-        Test that version strings are properly converted to tuples.
-        """
-        good_version = "1.0.0"
-        bad_version = "v1.0.0"
-
-        good_actual = version_tuple(good_version)
-        good_expected = (1, 0, 0)
-
-        bad_actual = version_tuple(bad_version)
-
-        self.assertEqual(good_actual, good_expected)
-        self.assertIsNone(bad_actual)
-
     def test_compare_versions(self):
         """
         Test that version comparisons work correctly.
