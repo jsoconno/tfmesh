@@ -44,5 +44,7 @@ jobs:
             bot
           body: |
             Module versions were automatically updated based on the latest versions available.
+
+            ${{ env.TABLE }}
           add-paths: |
             **/*.tf
