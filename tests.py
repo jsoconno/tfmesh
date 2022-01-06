@@ -83,6 +83,20 @@ class TestCore(unittest.TestCase):
 
         self.assertTrue(result)
 
+    def test_tuple_math(self):
+        """
+        Test that tuple math is performed correctly.
+        """
+        a = (1, 2, 0)
+        b = (2, 2, 1)
+
+        result = (
+            tuple_math(a, "+", b) == (3, 4, 1) and
+            tuple_math(a, "-", b) == (-1, 0, -1)
+        )
+
+        self.assertTrue(result)
+
     def test_compare_versions_with_none_types(self):
         """
         Test that null values passed to compare_versions result in a value of False.
