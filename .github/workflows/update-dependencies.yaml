@@ -46,4 +46,4 @@ jobs:
           body: |
             Module versions were automatically updated based on the latest versions available.
           add-paths: |
-            *.tf
+            **/*.tf
