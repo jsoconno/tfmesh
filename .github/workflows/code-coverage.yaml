@@ -17,7 +17,7 @@ jobs:
         pip install -r requirements.txt
     - name: Run coverage tests
       run: |
-        coverage run -m unittest -v
+        coverage run -m unittest tests/test*.py -v
         coverage report
         coverage xml
     - name: Publish results to Codecov
