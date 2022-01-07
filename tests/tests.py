@@ -1,6 +1,6 @@
 import unittest
 import pathlib
-from core import *
+from src.core import *
 
 class TestCore(unittest.TestCase):
     def test_get_terraform_files(self):
