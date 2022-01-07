@@ -35,7 +35,7 @@ for dependency in dependencies:
 
 print('\n')
 if dry_run:
-    print("This is a what if scenario.  No files were updated.")
+    print("This is a dry run.  No files were updated.")
 table = tabulate(table, headers=table_headers, tablefmt='pretty')
 print(table)
 print('\n')
