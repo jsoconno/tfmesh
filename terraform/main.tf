@@ -47,7 +47,7 @@ module "api_gateway" {
 }
 
 module "lambda" {
-  source = "github.com/jsoconno/terraform-module-aws-lambda?ref=v1.1.1" # >=1.0.0, <1.1.2
+  source = "github.com/jsoconno/terraform-module-aws-lambda?ref=v1.0.0" # >=1.0.0, <1.1.2
   #   source = "../terraform-module-aws-lambda"
 
   name = "test-lambda"
