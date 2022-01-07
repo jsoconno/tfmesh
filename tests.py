@@ -156,6 +156,18 @@ class TestCore(unittest.TestCase):
 
         self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), ["v2.0.0", "v2.0.1"])
 
+    def test_get_allowed_versions_no_pre_releases(self):
+        """
+        Test passing and excluding pre-releases.
+        """
+        available_versions = ["v0.1.0","v0.1.1","v0.1.3-alpha1","v0.1.3","v1.0.0","v1.1.2-pre001","v2.0.0"]
+
+        result_with_pre_releases = len(get_allowed_versions(available_versions, exclude_pre_release=False))
+        result_without_pre_releases = len(get_allowed_versions(available_versions, exclude_pre_release=True))
+
+        self.assertEqual(result_with_pre_releases, 7)
+        self.assertEqual(result_without_pre_releases, 5)
+
     def test_color(self):
         self.assertEqual(color("ok_blue"), "\033[94m")
 
@@ -221,7 +233,7 @@ class TestCore(unittest.TestCase):
 
     def test_get_status_pinned(self):
         """
-        Test that the correct version change status is returned ((.) version pinned).
+        Test that the correct version change status is returned ((.) pinned out-of-date).
         """
         current_version = "1.0.0"
         latest_available_version = "2.0.0"
