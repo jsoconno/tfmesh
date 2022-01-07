@@ -50,6 +50,8 @@ jobs:
           body: |
             Module versions were automatically updated based on the latest versions available.
 
+            ```
             ${{ steps.tfmesh.outputs.changelog }}
+            ```
           add-paths: |
             **/*.tf
