@@ -161,7 +161,7 @@ def get_github_user_and_repo(source):
 
     return data
 
-def get_available_versions(target, source, exclude_pre_release=True):
+def get_available_versions(target, source=None, exclude_pre_release=True):
     """
     Gets a list of available versions based on API calls to various endpoints.
     """

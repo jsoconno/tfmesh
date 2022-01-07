@@ -1,6 +1,6 @@
 import unittest
 import pathlib
-from core import *
+from src.core import *
 
 class TestCore(unittest.TestCase):
     def test_get_terraform_files(self):
@@ -156,17 +156,16 @@ class TestCore(unittest.TestCase):
 
         self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), ["v2.0.0", "v2.0.1"])
 
-    def test_get_allowed_versions_no_pre_releases(self):
+    def test_get_available_versions(self):
         """
-        Test passing and excluding pre-releases.
+        Test that the number of available versions is less when pre-releases are excluded.
         """
-        available_versions = ["v0.1.0","v0.1.1","v0.1.3-alpha1","v0.1.3","v1.0.0","v1.1.2-pre001","v2.0.0"]
+        result_with_pre_releases = get_available_versions("terraform", exclude_pre_release=False)
+        result_without_pre_releases = get_available_versions("terraform", exclude_pre_release=True)
 
-        result_with_pre_releases = len(get_allowed_versions(available_versions, exclude_pre_release=False))
-        result_without_pre_releases = len(get_allowed_versions(available_versions, exclude_pre_release=True))
-
-        self.assertEqual(result_with_pre_releases, 7)
-        self.assertEqual(result_without_pre_releases, 5)
+        self.assertGreater(result_with_pre_releases, result_without_pre_releases)
+        self.assertIn("0.12.0-alpha3", result_with_pre_releases)
+        self.assertNotIn("0.12.0-alpha3", result_without_pre_releases)
 
     def test_color(self):
         self.assertEqual(color("ok_blue"), "\033[94m")
@@ -241,7 +240,7 @@ class TestCore(unittest.TestCase):
 
         status = get_status(current_version, latest_available_version, latest_allowed_version)
 
-        self.assertIn("(.) version pinned", status)
+        self.assertIn("(.) pinned out-of-date", status)
 
     def test_get_status_no_suitable_version(self):
         """
@@ -264,6 +263,24 @@ class TestCore(unittest.TestCase):
 
         self.assertEqual(result, ["2.0", "1.10.0", "1.9.0", "1.1.1", "1.0.0"])
 
+    def test_get_depenencies(self):
+        """
+        Test that terraform dependencies can be collected.
+        """
+        files = get_terraform_files(pathlib.Path(__file__).parent.resolve(), "tests.py")
+
+        # This is added so that it can be parsed as part of testing without relying on other tf files.
+        config_text = """
+module "consul" {
+    source = "hashicorp/consul/aws"
+    version = "0.5.0" # >=0.2.0, <0.6.0
+}
+        """
+
+        dependencies = get_dependencies(files)
+        print(len(dependencies))
+        
+        self.assertEqual("consul", dependencies[0]["name"])
 
 if __name__ == '__main__':
     unittest.main()
