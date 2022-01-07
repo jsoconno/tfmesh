@@ -14,7 +14,7 @@ on:
     - cron:  '0 */24 * * *'
 
 jobs:
-  terradepend:
+  tfmesh:
     runs-on: ubuntu-latest
     name: "Automated Module Version Updates"
     steps:
@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
-      - name: Update Terraform Dependencies
+      - name: Run Python Script
         id: tfmesh
         run: |
           pip install requests
@@ -43,6 +43,7 @@ jobs:
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           branch: module-version-updates
+          base: ${{ github.head_ref }}
           delete-branch: true
           title: 'Terraform module version updates'
           labels: |
