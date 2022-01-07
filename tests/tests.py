@@ -267,20 +267,13 @@ class TestCore(unittest.TestCase):
         """
         Test that terraform dependencies can be collected.
         """
-        files = get_terraform_files(pathlib.Path(__file__).parent.resolve(), "tests.py")
-
-        # This is added so that it can be parsed as part of testing without relying on other tf files.
-        config_text = """
-module "consul" {
-    source = "hashicorp/consul/aws"
-    version = "0.5.0" # >=0.2.0, <0.6.0
-}
-        """
+        files = get_terraform_files(pathlib.Path(__file__).parent.resolve(), "*.tf")
 
         dependencies = get_dependencies(files)
-        print(len(dependencies))
         
-        self.assertEqual("consul", dependencies[0]["name"])
+        # This does not test everything, but at least makes sure it is basically working
+        self.assertEqual(len(dependencies), 5)
+        self.assertEqual("terraform", dependencies[0]["name"])
 
 if __name__ == '__main__':
     unittest.main()
