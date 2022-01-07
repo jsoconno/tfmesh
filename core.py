@@ -161,7 +161,7 @@ def get_github_user_and_repo(source):
 
     return data
 
-def get_available_versions(target, source):
+def get_available_versions(target, source, exclude_pre_release=True):
     """
     Gets a list of available versions based on API calls to various endpoints.
     """
@@ -180,6 +180,9 @@ def get_available_versions(target, source):
         available_versions = get_terraform_versions()
     else:
         available_versions = None
+
+    if exclude_pre_release:
+        available_versions = [version for version in available_versions if len(get_semantic_version(version)) < 4]
 
     return available_versions
 
@@ -288,7 +291,7 @@ def update_version(file_path, code, current_tag, latest_tag):
     with open(file_path, 'w') as f:
         f.write(data)
 
-def get_status(current_version, latest_available_version, latest_allowed_version):
+def get_status(current_version, latest_available_version, latest_allowed_version, no_color=False):
     """
     Takes version details and outputs the status as a string.
     """
@@ -297,20 +300,20 @@ def get_status(current_version, latest_available_version, latest_allowed_version
     latest_allowed_version = get_semantic_version(latest_allowed_version)
 
     if latest_allowed_version == None:
-        status = "(x) no suitable version"
+        status = f"{'' if no_color else color('fail')}(x) no suitable version{'' if no_color else color()}"
     elif compare_versions(current_version, "=", latest_available_version) and compare_versions(current_version, "=", latest_allowed_version):
-        status = "(*) up-to-date"
+        status = f"{'' if no_color else color('ok_green')}(*) up-to-date{'' if no_color else color()}"
     elif compare_versions(current_version, "!=", latest_available_version) and compare_versions(current_version, "=", latest_allowed_version):
-        status = "(.) version pinned"
+        status = f"{'' if no_color else color('warning')}(.) pinned out-of-date{'' if no_color else color()}"
     elif compare_versions(current_version, "<", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
-        status = "(->) upgraded to latest"
+        status = f"{'' if no_color else color('ok_green')}(->) upgraded to latest{'' if no_color else color()}"
     elif compare_versions(current_version, "<", latest_available_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
-        status = "(>) upgraded to allowed"
+        status = f"{'' if no_color else color('warning')}(>) upgraded to allowed{'' if no_color else color()}"
     elif compare_versions(current_version, ">", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
-        status = "(<-) downgraded to latest"
+        status = f"{'' if no_color else color('ok_green')}(<-) downgraded to latest{'' if no_color else color()}"
     elif compare_versions(current_version, ">", latest_allowed_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
-        status = "(<) downgraded to allowed"
+        status = f"{'' if no_color else color('warning')}(<) downgraded to allowed{'' if no_color else color()}"
     else:
-        status = f"{color('fail')}(!) you found a bug{color()}"
+        status = f"{'' if no_color else color('fail')}(!) you found a bug{'' if no_color else color()}"
 
     return status
