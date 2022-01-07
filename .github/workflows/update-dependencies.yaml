@@ -43,6 +43,7 @@ jobs:
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           branch: module-version-updates
+          base: ${{ github.head_ref }}
           delete-branch: true
           title: 'Terraform module version updates'
           labels: |
