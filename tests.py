@@ -156,6 +156,17 @@ class TestCore(unittest.TestCase):
 
         self.assertEqual(get_allowed_versions(available_versions, lower_constraint, lower_constraint_operator, upper_constraint, upper_constraint_operator), ["v2.0.0", "v2.0.1"])
 
+    def test_get_available_versions(self):
+        """
+        Test that the number of available versions is less when pre-releases are excluded.
+        """
+        result_with_pre_releases = get_available_versions("terraform", exclude_pre_release=False)
+        result_without_pre_releases = get_available_versions("terraform", exclude_pre_release=True)
+
+        self.assertGreater(result_with_pre_releases, result_without_pre_releases)
+        self.assertIn("0.12.0-alpha3", result_with_pre_releases)
+        self.assertNotIn("0.12.0-alpha3", result_without_pre_releases)
+
     def test_color(self):
         self.assertEqual(color("ok_blue"), "\033[94m")
 
@@ -221,7 +232,7 @@ class TestCore(unittest.TestCase):
 
     def test_get_status_pinned(self):
         """
-        Test that the correct version change status is returned ((.) version pinned).
+        Test that the correct version change status is returned ((.) pinned out-of-date).
         """
         current_version = "1.0.0"
         latest_available_version = "2.0.0"
@@ -229,7 +240,7 @@ class TestCore(unittest.TestCase):
 
         status = get_status(current_version, latest_available_version, latest_allowed_version)
 
-        self.assertIn("(.) version pinned", status)
+        self.assertIn("(.) pinned out-of-date", status)
 
     def test_get_status_no_suitable_version(self):
         """
@@ -252,6 +263,17 @@ class TestCore(unittest.TestCase):
 
         self.assertEqual(result, ["2.0", "1.10.0", "1.9.0", "1.1.1", "1.0.0"])
 
+    def test_get_depenencies(self):
+        """
+        Test that terraform dependencies can be collected.
+        """
+        files = get_terraform_files(pathlib.Path(__file__).parent.resolve(), "*.tf")
+
+        dependencies = get_dependencies(files)
+        
+        # This does not test everything, but at least makes sure it is basically working
+        self.assertEqual(len(dependencies), 5)
+        self.assertEqual("terraform", dependencies[0]["name"])
 
 if __name__ == '__main__':
     unittest.main()

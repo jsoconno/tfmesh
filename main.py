@@ -23,7 +23,7 @@ for dependency in dependencies:
     latest_available_version = get_latest_version(available_versions)
     latest_allowed_version = get_latest_version(allowed_versions)
 
-    status = get_status(current_version, latest_available_version, latest_allowed_version)
+    status = get_status(current_version, latest_available_version, latest_allowed_version, no_color=True)
 
     if compare_versions(get_semantic_version(current_version), "!=", get_semantic_version(latest_allowed_version)):
         if dry_run:
@@ -35,7 +35,7 @@ for dependency in dependencies:
 
 print('\n')
 if dry_run:
-    print("This is a what if scenario.  No files were updated.")
+    print("This is a dry run.  No files were updated.")
 table = tabulate(table, headers=table_headers, tablefmt='pretty')
 print(table)
 print('\n')

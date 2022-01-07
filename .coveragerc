@@ -2,3 +2,4 @@
 [run]
 omit = 
     */opt/homebrew/*
+    *__init__.py
