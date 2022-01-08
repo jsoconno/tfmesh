@@ -19,26 +19,26 @@ The project is currently under **active development** and aims to eliminate the 
 
 ![GitHub contributors](https://img.shields.io/github/contributors/jsoconno/tfmesh)
 
-# Selecting Files
+# Selecting files
 
 By default, Terraform Mesh will search for files that match the pattern `'*.tf`.  This will collect all dependencies in the current directory.  In order to recursively collect versioned resources, you can override this value with `**/*.tf`.
 
-# Supported Resources
+# Supported resources
 
 The following Terraform configuration file dependencies are supported.
 
-* Terraform `required_veresion` block
+* Terraform `required_version` block
 * Provider `required_providers` blocks
 * Terraform Registry (Public and Private)
 * Github Modules (Public and Private)
 
-Modules hosted in a git repository work so long as semantic verioning is used (e.g. `1.1.1`, `v1.0.0`, `version1.0.0-pre001`, etc.)  Both https and ssh are supported methods for referencing private modules.
+Modules hosted in a git repository work so long as semantic versioning is used (e.g. `1.1.1`, `v1.0.0`, `version1.0.0-pre001`, etc.)  Both https and ssh are supported methods for referencing private modules.
 
 Further development and testing is planned to support `gitlab` and `bitbucket` git sources and tags.
 
-# Version Constrains
+# Version constrains
 
-All version contraints natively available in Terraform are supported.
+All version constraints natively available in Terraform are supported.
 
 * `=`: equal to the given version (pinned)
 * `!=`: not equal to a given version (excluded)
@@ -48,9 +48,9 @@ All version contraints natively available in Terraform are supported.
 * `<=`: less than or equal to the given version (inclusive)
 * `~>`: only the rightmost version component can increment
 
-Upper and lower constraints are also supported (e.g. `>=1.0.0, <2.0.0`).  Both `~>x.x` and `~>x.x.x` are valid for pessimistic contraint operators.
+Upper and lower constraints are also supported (e.g. `>=1.0.0, <2.0.0`).  Both `~>x.x` and `~>x.x.x` are valid for pessimistic constraint operators.
 
-# Setting Constraints
+# Setting constraints
 
 Terraform Mesh has taken the approach of using inline comments to set constraints.  For example:
 
@@ -85,11 +85,13 @@ It is recommended to use Terraform Mesh comment syntax over the Terraform defaul
 The tfmesh cli provides a convenient way of working with version updates in Terraform that is suited for local development or CI/CD pipelines.
 
 ## Base command
+
 * `tfmesh` - this would be the root command.
   * `--version` - returns the cli version.
   * `--help` - returns helpful information.
 
 ## Get command
+
 * `get` - action for getting information about the configuration and config versions.
   * `terraform` - returns all details about the terraform executable.
     * `--filepath` - returns the absolute path to the Terraform configuration file.
@@ -98,7 +100,7 @@ The tfmesh cli provides a convenient way of working with version updates in Terr
     * `--source` - returns the source for the resource.
     * `--version` - returns the version.
     * `--constraints` - returns version constraints.
-    * `--available-verions` - returns available versions.
+    * `--available-versions` - returns available versions.
     * `--allowed-versions` - returns allowed versions based on constraints.
   * `provider` - returns a list of tracked providers.
     * `name (optional)` - returns all details about a given provider.
@@ -108,7 +110,7 @@ The tfmesh cli provides a convenient way of working with version updates in Terr
       * `--source` - returns the source for the resource.
       * `--version` - returns the version.
       * `--constraints` - returns version constraints.
-      * `--available-verions` - returns available versions.
+      * `--available-versions` - returns available versions.
       * `--allowed-versions` - returns allowed versions based on constraints.
   * `module` - returns a list of tracked modules.
     * `name (optional)` - returns all details about a given module.
@@ -118,7 +120,7 @@ The tfmesh cli provides a convenient way of working with version updates in Terr
       * `--source` - returns the source for the resource.
       * `--version` - returns the version.
       * `--constraints` - returns version constraints.
-      * `--available-verions` - returns available versions.
+      * `--available-versions` - returns available versions.
       * `--allowed-versions` - returns allowed versions.
 
 Example:
@@ -127,6 +129,7 @@ tfmesh get module s3 --constraints
 ```
 
 ## Set command
+
 * `set` - action for setting terraform versions and constraints.
   * `terraform`
     * `--version`
@@ -146,6 +149,7 @@ tfmesh set s3 --version 1.0.0
 ```
 
 ## Upgrade command
+
 * `upgrade` - action for upgrading terraform versions based on constraints.
   * `all` - updates all terraform, providers, and modules.
   * `terraform` - updates terraform.
@@ -156,10 +160,11 @@ All commands support a `--dry-run` flag that will provide terminal output of wha
 
 Example:
 ```cmd
-tfmesh upgade all
+tfmesh upgrade all
 ```
 
-# Example Output
+# Example output
+
 ```
 +-------------------+-------------+---------+-----------+-----------------+---------+-------------------------+
 |     resource      |   module    | current |  latest   |   constraint    | latest  |         status          |
@@ -173,7 +178,8 @@ tfmesh upgade all
 +-------------------+-------------+---------+-----------+-----------------+---------+-------------------------+
 ```
 
-# Version Status
+# Version status
+
 TFMesh will evaluate versions in your configuration to determine the current version, latest available version, and latest allowed version.
 
 * `current version` - The current version set in the configuration.
