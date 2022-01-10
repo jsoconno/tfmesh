@@ -1,4 +1,4 @@
-from src.core import *
+from tfmesh.core import *
 
 dry_run = False
 
