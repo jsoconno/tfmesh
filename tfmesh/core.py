@@ -38,12 +38,11 @@ def get_semantic_version(version):
     """
     Get a dictionary of the semantic version components including major, minor, patch, and pre-release.
     """
-    regex_pattern = r'((0|[1-9]\d*)\.*(0|[1-9]\d*)*\.*(0|[1-9]\d*)*(?:-(?:((?:[a-zA-Z]*(\d*)))))?)'
+    regex_pattern = r'(\d+)\.*(\d+)*\.*(\d+)*(?:-*(?:(?:[a-zA-Z]*(\d*)))?)'
 
     try:
         version = re.findall(regex_pattern, version)[0]
-        component_list = [int(component) for component in [version[1], version[2], version[3], version[5]] if component != '']
-        version = tuple(component_list)
+        version = tuple([int(component) for component in version if component != ''])
     except:
         version = None
 
