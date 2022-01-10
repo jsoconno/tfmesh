@@ -2,7 +2,7 @@
 
 Terraform Mesh is a built-for-purpose Terraform dependency manager that provides a simple and powerful CLI for automating dependency updates that integrates with modern CI/CD processes.
 
-The project is currently under **active development** and aims to eliminate the toil of keeping cloud infrastructure dependencies up-to-date
+The project is currently under **active development** and aims to eliminate the toil of keeping cloud infrastructure dependencies up-to-date.  In order to test updates to the CLI, make changes and run `pip3 install --editable .` locally.
 
 ![Latest tag](https://img.shields.io/github/v/tag/jsoconno/tfmesh)
 ![Lines of code](https://img.shields.io/tokei/lines/github/jsoconno/tfmesh)
