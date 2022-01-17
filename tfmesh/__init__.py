@@ -84,7 +84,7 @@ def providers(config):
     dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "provider": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
+            "providers": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
         }
     )
     for resource_type, providers in dependencies.items():
@@ -102,23 +102,23 @@ def provider(config, name, attribute, allowed, exclude_prerelease, top):
     dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "provider": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
+            "providers": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
         }
     )
     available_versions = sort_versions(
         get_available_versions(
-            target=dependencies["provider"][name]["target"],
-            source=dependencies["provider"][name]["source"],
+            target=dependencies["providers"][name]["target"],
+            source=dependencies["providers"][name]["source"],
             exclude_pre_release=exclude_prerelease
         )
     )
     allowed_versions = sort_versions(
         get_allowed_versions(
             available_versions,
-            dependencies["provider"][name]["lower_constraint"],
-            dependencies["provider"][name]["lower_constraint_operator"],
-            dependencies["provider"][name]["upper_constraint"],
-            dependencies["provider"][name]["upper_constraint_operator"],
+            dependencies["providers"][name]["lower_constraint"],
+            dependencies["providers"][name]["lower_constraint_operator"],
+            dependencies["providers"][name]["upper_constraint"],
+            dependencies["providers"][name]["upper_constraint_operator"],
         )
     )
     if attribute == "versions":
@@ -127,7 +127,7 @@ def provider(config, name, attribute, allowed, exclude_prerelease, top):
         else:
             print_list(available_versions, top)
     else:
-        print(dependencies["provider"][name][attribute])
+        print(dependencies["providers"][name][attribute])
 
 @get.command("modules")
 @click.pass_obj
@@ -135,7 +135,7 @@ def modules(config):
     dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "module": [
+            "modules": [
                 r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
                 r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
             ],
@@ -156,24 +156,24 @@ def module(config, name, attribute, allowed, exclude_prerelease, top):
     dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "module": [
+            "modules": [
                 r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
                 r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
             ],
         }
     )
     available_versions = sort_versions(get_available_versions(
-        target=dependencies["module"][name]["target"],
-        source=dependencies["module"][name]["source"],
+        target=dependencies["modules"][name]["target"],
+        source=dependencies["modules"][name]["source"],
         exclude_pre_release=exclude_prerelease)
     )
     allowed_versions = sort_versions(
         get_allowed_versions(
             available_versions,
-            dependencies["module"][name]["lower_constraint"],
-            dependencies["module"][name]["lower_constraint_operator"],
-            dependencies["module"][name]["upper_constraint"],
-            dependencies["module"][name]["upper_constraint_operator"],
+            dependencies["modules"][name]["lower_constraint"],
+            dependencies["modules"][name]["lower_constraint_operator"],
+            dependencies["modules"][name]["upper_constraint"],
+            dependencies["modules"][name]["upper_constraint_operator"],
         )
     )
     if attribute == "versions":
@@ -182,7 +182,7 @@ def module(config, name, attribute, allowed, exclude_prerelease, top):
         else:
             print_list(available_versions, top)
     else:
-        print(dependencies["module"][name][attribute])
+        print(dependencies["modules"][name][attribute])
 
 @set.command("terraform")
 @click.argument("attribute", type=click.Choice(["version", "constraint"]))
@@ -253,26 +253,26 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
     dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "provider": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
+            "providers": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
         }
     )
     available_versions = sort_versions(
         get_available_versions(
-            target=dependencies["provider"][name]["target"],
-            source=dependencies["provider"][name]["source"],
+            target=dependencies["providers"][name]["target"],
+            source=dependencies["providers"][name]["source"],
             exclude_pre_release=exclude_prerelease
         )
     )
     allowed_versions = sort_versions(
         get_allowed_versions(
             available_versions,
-            dependencies["provider"][name]["lower_constraint"],
-            dependencies["provider"][name]["lower_constraint_operator"],
-            dependencies["provider"][name]["upper_constraint"],
-            dependencies["provider"][name]["upper_constraint_operator"],
+            dependencies["providers"][name]["lower_constraint"],
+            dependencies["providers"][name]["lower_constraint_operator"],
+            dependencies["providers"][name]["upper_constraint"],
+            dependencies["providers"][name]["upper_constraint_operator"],
         )
     )
-    current_value = dependencies["provider"][name][attribute]
+    current_value = dependencies["providers"][name][attribute]
     new_value = value
 
     if ignore_constraints:
@@ -284,14 +284,14 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
         print(f'The {attribute} is already set to "{new_value}".')
     elif force or new_value in versions or attribute == "constraint":
         update_version(
-            filepath=dependencies["provider"][name]["filepath"],
-            code=dependencies["provider"][name]["code"],
+            filepath=dependencies["providers"][name]["filepath"],
+            code=dependencies["providers"][name]["code"],
             attribute=attribute,
             value=value
         )
         print(f'The {attribute} was changed from "{current_value}" to "{new_value}".')
     elif versions == []:
-        print(f'There is no version available that meets the constraint "{dependencies["provider"][name]["constraint"]}".')
+        print(f'There is no version available that meets the constraint "{dependencies["providers"][name]["constraint"]}".')
     else:
         print(f'"{value}" is not an acceptable version.  Select from one of:')
         print_list(versions)
@@ -310,7 +310,7 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
     dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "module": [
+            "modules": [
                 r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
                 r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
             ],
@@ -318,21 +318,21 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
     )
     available_versions = sort_versions(
         get_available_versions(
-            target=dependencies["module"][name]["target"],
-            source=dependencies["module"][name]["source"],
+            target=dependencies["modules"][name]["target"],
+            source=dependencies["modules"][name]["source"],
             exclude_pre_release=exclude_prerelease
         )
     )
     allowed_versions = sort_versions(
         get_allowed_versions(
             available_versions,
-            dependencies["module"][name]["lower_constraint"],
-            dependencies["module"][name]["lower_constraint_operator"],
-            dependencies["module"][name]["upper_constraint"],
-            dependencies["module"][name]["upper_constraint_operator"],
+            dependencies["modules"][name]["lower_constraint"],
+            dependencies["modules"][name]["lower_constraint_operator"],
+            dependencies["modules"][name]["upper_constraint"],
+            dependencies["modules"][name]["upper_constraint_operator"],
         )
     )
-    current_value = dependencies["module"][name][attribute]
+    current_value = dependencies["modules"][name][attribute]
     new_value = value
 
     if ignore_constraints:
@@ -344,20 +344,163 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
         print(f'The {attribute} is already set to "{new_value}".')
     elif force or new_value in versions or attribute == "constraint":
         update_version(
-            filepath=dependencies["module"][name]["filepath"],
-            code=dependencies["module"][name]["code"],
+            filepath=dependencies["modules"][name]["filepath"],
+            code=dependencies["modules"][name]["code"],
             attribute=attribute,
             value=value
         )
         print(f'The {attribute} was changed from "{current_value}" to "{new_value}".')
     elif versions == []:
-        print(f'There is no version available that meets the constraint "{dependencies["module"][name]["constraint"]}".')
+        print(f'There is no version available that meets the constraint "{dependencies["modules"][name]["constraint"]}".')
     else:
         print(f'"{value}" is not an acceptable version.  Select from one of:')
         print_list(versions)
         raise click.Abort
 
 @cli.command("plan")
+@click.option("--target", nargs=2, multiple=True)
+@click.option("--exclude-prerelease", is_flag=True)
+@click.option("--ignore-constraints", is_flag=True)
+@click.option("--no-color", is_flag=True)
 @click.pass_obj
-def plan(config):
-    pass
+def plan(config, target, exclude_prerelease, ignore_constraints, no_color):
+    table_headers = ["resource\ntype", "module\nname", "current\nversion", "latest\navailable", "constraint", "latest\nallowed", "status"]
+    table = []
+    patterns = {
+        "terraform": [r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)'],
+        "providers": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
+        "modules": [
+            r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+            r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})'
+        ]
+    }
+    dependencies = get_dependencies(
+        terraform_files=config["terraform_files"],
+        patterns = patterns
+    )
+    for resource_type, resource in dependencies.items():
+        for name, attributes in resource.items():
+            available_versions = sort_versions(
+                get_available_versions(
+                    target=attributes["target"],
+                    source=attributes["source"],
+                    exclude_pre_release=exclude_prerelease
+                )
+            )
+            allowed_versions = get_allowed_versions(
+                available_versions,
+                attributes["lower_constraint"],
+                attributes["lower_constraint_operator"],
+                attributes["upper_constraint"],
+                attributes["upper_constraint_operator"],
+            )
+            if ignore_constraints:
+                versions = available_versions
+            else:
+                versions = allowed_versions
+
+            # Versions
+            current_version = attributes["version"]
+            latest_available_version = get_latest_version(available_versions)
+            latest_allowed_version = get_latest_version(allowed_versions)
+
+            status = get_status(current_version, latest_available_version, latest_allowed_version, no_color=no_color)
+
+            if not target:
+                table.append([attributes["target"], attributes["name"], current_version, latest_available_version, attributes["constraint"], latest_allowed_version, status])
+            else:
+                for resource in target:
+                    resource_type = resource[0]
+                    resource_name = resource[1]
+                    if resource_type in attributes["target"] and resource_name == attributes["name"]:
+                        table.append([attributes["target"], attributes["name"], current_version, latest_available_version, attributes["constraint"], latest_allowed_version, status])
+                    else:
+                        pass
+
+    print('\n')
+    print("This was a plan only.  No files were updated.")
+    table = tabulate(table, headers=table_headers, tablefmt='pretty')
+    print(table)
+    print('\n')
+
+@cli.command("apply")
+@click.option("--target", nargs=2, multiple=True)
+@click.option("--exclude-prerelease", is_flag=True)
+@click.option("--ignore-constraints", is_flag=True)
+@click.option("--no-color", is_flag=True)
+@click.pass_obj
+def apply(config, target, exclude_prerelease, ignore_constraints, no_color):
+    table_headers = ["resource\ntype", "module\nname", "current\nversion", "latest\navailable", "constraint", "latest\nallowed", "status"]
+    table = []
+    patterns = {
+        "terraform": [r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)'],
+        "providers": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
+        "modules": [
+            r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+            r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})'
+        ]
+    }
+    dependencies = get_dependencies(
+        terraform_files=config["terraform_files"],
+        patterns = patterns
+    )
+    for resource_type, resource in dependencies.items():
+        for name, attributes in resource.items():
+            available_versions = sort_versions(
+                get_available_versions(
+                    target=attributes["target"],
+                    source=attributes["source"],
+                    exclude_pre_release=exclude_prerelease
+                )
+            )
+            allowed_versions = get_allowed_versions(
+                available_versions,
+                attributes["lower_constraint"],
+                attributes["lower_constraint_operator"],
+                attributes["upper_constraint"],
+                attributes["upper_constraint_operator"],
+            )
+            if ignore_constraints:
+                versions = available_versions
+            else:
+                versions = allowed_versions
+
+            # Versions
+            current_version = attributes["version"]
+            latest_available_version = get_latest_version(available_versions)
+            latest_allowed_version = get_latest_version(allowed_versions)
+
+            status = get_status(current_version, latest_available_version, latest_allowed_version, no_color=no_color)
+
+            if not target:
+                if compare_versions(get_semantic_version(current_version), "!=", get_semantic_version(latest_allowed_version)):
+                    update_version(
+                        filepath=attributes["filepath"],
+                        code=attributes["code"],
+                        attribute="version",
+                        value=latest_allowed_version
+                    )
+                    
+                table.append([attributes["target"], attributes["name"], current_version, latest_available_version, attributes["constraint"], latest_allowed_version, status])
+            else:
+                for resource in target:
+                    resource_type = resource[0]
+                    resource_name = resource[1]
+                    if resource_type in attributes["target"] and resource_name == attributes["name"]:
+                        if compare_versions(get_semantic_version(current_version), "!=", get_semantic_version(latest_allowed_version)):
+                            update_version(
+                                filepath=attributes["filepath"],
+                                code=attributes["code"],
+                                attribute="version",
+                                value=latest_allowed_version
+                            )
+                
+                        table.append([attributes["target"], attributes["name"], current_version, latest_available_version, attributes["constraint"], latest_allowed_version, status])
+                    else:
+                        pass
+
+    print('\n')
+    print("Configuration version were upgraded!")
+    table = tabulate(table, headers=table_headers, tablefmt='pretty')
+    print(table)
+    print('\n')

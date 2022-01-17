@@ -1,11 +1,11 @@
 module "consul" {
   source = "hashicorp/consul/aws"
-  version = "0.10.0" # ~>0.5
+  version = "0.11.0" # ~>0.5
 }
 
 module "conventions" {
   source  = "Jsoconno/conventions/azure"
-  version = "0.5.1" # ~>6.0
+  version = "6.0.0" # ~>6.0
   # insert the 1 required variable here
 }
 
@@ -42,7 +42,7 @@ module "lambda" {
 }
 
 module "s3" {
-  source = "github.com/jsoconno/terraform-module-aws-s3?ref=v1.0.0" # >=1.0.0, <2.0.0
+  source = "github.com/jsoconno/terraform-module-aws-s3?ref=v1.1.0" # >=1.0.0, <2.0.0
 # source = "../terraform-module-aws-s3"
 
   s3_access_iam_role_names = [

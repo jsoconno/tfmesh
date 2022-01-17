@@ -161,12 +161,12 @@ def get_available_versions(target, source=None, exclude_pre_release=False):
     github_token = os.environ["PAT_TOKEN"]
 
     # Pull available versions
-    if target == "module" and "github" in source:
+    if target == "modules" and "github" in source:
         data = get_github_user_and_repo(source)
         available_versions = get_github_module_versions(data["user"], data["repo"], token=github_token)
-    elif target == "module":
+    elif target == "modules":
         available_versions = get_terraform_module_versions(source)
-    elif target == "provider":
+    elif target == "providers":
         available_versions = get_terraform_provider_versions(source)
     elif target == "terraform":
         available_versions = get_terraform_versions()
@@ -277,8 +277,8 @@ def update_version(filepath, code, attribute, value):
     """
     #TODO: Rename this function
     patterns = {
-        "version": r'(= *"*)([a-zA-Z]*[0-9\.]+)(\" *#? *[=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)',
-        "constraint": r'(= *"*[a-zA-Z]*[0-9\.]+\" *#? *)([=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)*()',
+        "version": r'(= *"*)([a-zA-Z]*[\S]+)(\" *#? *[=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)',
+        "constraint": r'(= *"*[a-zA-Z]*[\S]+\" *#? *)([=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)*()',
     }
 
     # Handle edge case where constraint is added to resource with no current constraint
