@@ -48,26 +48,26 @@ def set():
 @click.option("--top", type=int, default=None)
 @click.pass_obj
 def terraform(config, attribute, allowed, exclude_prerelease, top):
-    terraform = get_dependencies(
+    dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "terraform": r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)'
+            "terraform": [r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)'],
         }
     )
     available_versions = sort_versions(
         get_available_versions(
-            target=terraform["terraform"]["target"],
-            source=terraform["terraform"]["source"],
+            target=dependencies["terraform"]["terraform"]["target"],
+            source=dependencies["terraform"]["terraform"]["source"],
             exclude_pre_release=exclude_prerelease
         )
     )
     allowed_versions = sort_versions(
         get_allowed_versions(
             available_versions,
-            terraform["terraform"]["lower_constraint"],
-            terraform["terraform"]["lower_constraint_operator"],
-            terraform["terraform"]["upper_constraint"],
-            terraform["terraform"]["upper_constraint_operator"],
+            dependencies["terraform"]["terraform"]["lower_constraint"],
+            dependencies["terraform"]["terraform"]["lower_constraint_operator"],
+            dependencies["terraform"]["terraform"]["upper_constraint"],
+            dependencies["terraform"]["terraform"]["upper_constraint_operator"],
         )
     )
     if attribute == "versions":
@@ -76,20 +76,20 @@ def terraform(config, attribute, allowed, exclude_prerelease, top):
         else:
             print_list(available_versions, top)
     else:
-        print(terraform["terraform"][attribute])
+        print(dependencies["terraform"]["terraform"][attribute])
 
 @get.command("providers")
 @click.pass_obj
 def providers(config):
-    providers = get_dependencies(
+    dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "provider": r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})',
+            "provider": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
         }
     )
-    providers = list(providers.keys())
-    for provider in providers:
-        print(f'- {provider}')
+    for resource_type, providers in dependencies.items():
+        for provider in providers:
+            print(f'- {provider}')
 
 @get.command("provider")
 @click.argument("name", type=str)
@@ -99,26 +99,26 @@ def providers(config):
 @click.option("--top", type=int, default=None)
 @click.pass_obj
 def provider(config, name, attribute, allowed, exclude_prerelease, top):
-    providers = get_dependencies(
+    dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "provider": r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})',
+            "provider": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
         }
     )
     available_versions = sort_versions(
         get_available_versions(
-            target=providers[name]["target"],
-            source=providers[name]["source"],
+            target=dependencies["provider"][name]["target"],
+            source=dependencies["provider"][name]["source"],
             exclude_pre_release=exclude_prerelease
         )
     )
     allowed_versions = sort_versions(
         get_allowed_versions(
             available_versions,
-            providers[name]["lower_constraint"],
-            providers[name]["lower_constraint_operator"],
-            providers[name]["upper_constraint"],
-            providers[name]["upper_constraint_operator"],
+            dependencies["provider"][name]["lower_constraint"],
+            dependencies["provider"][name]["lower_constraint_operator"],
+            dependencies["provider"][name]["upper_constraint"],
+            dependencies["provider"][name]["upper_constraint_operator"],
         )
     )
     if attribute == "versions":
@@ -127,21 +127,23 @@ def provider(config, name, attribute, allowed, exclude_prerelease, top):
         else:
             print_list(available_versions, top)
     else:
-        print(providers[name][attribute])
+        print(dependencies["provider"][name][attribute])
 
 @get.command("modules")
 @click.pass_obj
 def modules(config):
-    modules = get_dependencies(
+    dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "module (registry)": r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
-            "module (git)": r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})'
+            "module": [
+                r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+                r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+            ],
         }
     )
-    modules = list(modules.keys())
-    for module in modules:
-        print(f'- {module}')
+    for resource_type, modules in dependencies.items():
+        for module in modules:
+            print(f'- {module}')
 
 @get.command("module")
 @click.argument("name", type=str)
@@ -151,25 +153,27 @@ def modules(config):
 @click.option("--top", type=int, default=None)
 @click.pass_obj
 def module(config, name, attribute, allowed, exclude_prerelease, top):
-    modules = get_dependencies(
+    dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "module (registry)": r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
-            "module (git)": r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})'
+            "module": [
+                r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+                r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+            ],
         }
     )
     available_versions = sort_versions(get_available_versions(
-        target=modules[name]["target"],
-        source=modules[name]["source"],
+        target=dependencies["module"][name]["target"],
+        source=dependencies["module"][name]["source"],
         exclude_pre_release=exclude_prerelease)
     )
     allowed_versions = sort_versions(
         get_allowed_versions(
             available_versions,
-            modules[name]["lower_constraint"],
-            modules[name]["lower_constraint_operator"],
-            modules[name]["upper_constraint"],
-            modules[name]["upper_constraint_operator"],
+            dependencies["module"][name]["lower_constraint"],
+            dependencies["module"][name]["lower_constraint_operator"],
+            dependencies["module"][name]["upper_constraint"],
+            dependencies["module"][name]["upper_constraint_operator"],
         )
     )
     if attribute == "versions":
@@ -178,7 +182,7 @@ def module(config, name, attribute, allowed, exclude_prerelease, top):
         else:
             print_list(available_versions, top)
     else:
-        print(modules[name][attribute])
+        print(dependencies["module"][name][attribute])
 
 @set.command("terraform")
 @click.argument("attribute", type=click.Choice(["version", "constraint"]))
@@ -189,29 +193,29 @@ def module(config, name, attribute, allowed, exclude_prerelease, top):
 @click.option("--force", is_flag=True)
 @click.pass_obj
 def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_constraints, force):
-    terraform = get_dependencies(
+    dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "terraform": r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)'
+            "terraform": [r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)'],
         }
     )
     available_versions = sort_versions(
         get_available_versions(
-            target=terraform["terraform"]["target"],
-            source=terraform["terraform"]["source"],
+            target=dependencies["terraform"]["terraform"]["target"],
+            source=dependencies["terraform"]["terraform"]["source"],
             exclude_pre_release=exclude_prerelease
         )
     )
     allowed_versions = sort_versions(
         get_allowed_versions(
             available_versions,
-            terraform["terraform"]["lower_constraint"],
-            terraform["terraform"]["lower_constraint_operator"],
-            terraform["terraform"]["upper_constraint"],
-            terraform["terraform"]["upper_constraint_operator"],
+            dependencies["terraform"]["terraform"]["lower_constraint"],
+            dependencies["terraform"]["terraform"]["lower_constraint_operator"],
+            dependencies["terraform"]["terraform"]["upper_constraint"],
+            dependencies["terraform"]["terraform"]["upper_constraint_operator"],
         )
     )
-    current_value = terraform["terraform"][attribute]
+    current_value = dependencies["terraform"]["terraform"][attribute]
     new_value = value
 
     if ignore_constraints:
@@ -223,14 +227,14 @@ def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_cons
         print(f'The {attribute} is already set to "{new_value}".')
     elif force or new_value in versions or attribute == "constraint":
         update_version(
-            filepath=terraform["terraform"]["filepath"],
-            code=terraform["terraform"]["code"],
+            filepath=dependencies["terraform"]["terraform"]["filepath"],
+            code=dependencies["terraform"]["terraform"]["code"],
             attribute=attribute,
             value=value
         )
         print(f'The {attribute} was changed from "{current_value}" to "{new_value}".')
     elif versions == []:
-        print(f'There is no version available that meets the constraint "{terraform["terraform"]["constraint"]}".')
+        print(f'There is no version available that meets the constraint "{dependencies["terraform"]["terraform"]["constraint"]}".')
     else:
         print(f'"{value}" is not an acceptable version.  Select from one of:')
         print_list(versions)
@@ -246,29 +250,29 @@ def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_cons
 @click.option("--force", is_flag=True)
 @click.pass_obj
 def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, force):
-    provider = get_dependencies(
+    dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "provider": r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})',
+            "provider": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
         }
     )
     available_versions = sort_versions(
         get_available_versions(
-            target=provider[name]["target"],
-            source=provider[name]["source"],
+            target=dependencies["provider"][name]["target"],
+            source=dependencies["provider"][name]["source"],
             exclude_pre_release=exclude_prerelease
         )
     )
     allowed_versions = sort_versions(
         get_allowed_versions(
             available_versions,
-            provider[name]["lower_constraint"],
-            provider[name]["lower_constraint_operator"],
-            provider[name]["upper_constraint"],
-            provider[name]["upper_constraint_operator"],
+            dependencies["provider"][name]["lower_constraint"],
+            dependencies["provider"][name]["lower_constraint_operator"],
+            dependencies["provider"][name]["upper_constraint"],
+            dependencies["provider"][name]["upper_constraint_operator"],
         )
     )
-    current_value = provider[name][attribute]
+    current_value = dependencies["provider"][name][attribute]
     new_value = value
 
     if ignore_constraints:
@@ -280,14 +284,14 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
         print(f'The {attribute} is already set to "{new_value}".')
     elif force or new_value in versions or attribute == "constraint":
         update_version(
-            filepath=provider[name]["filepath"],
-            code=provider[name]["code"],
+            filepath=dependencies["provider"][name]["filepath"],
+            code=dependencies["provider"][name]["code"],
             attribute=attribute,
             value=value
         )
         print(f'The {attribute} was changed from "{current_value}" to "{new_value}".')
     elif versions == []:
-        print(f'There is no version available that meets the constraint "{provider[name]["constraint"]}".')
+        print(f'There is no version available that meets the constraint "{dependencies["provider"][name]["constraint"]}".')
     else:
         print(f'"{value}" is not an acceptable version.  Select from one of:')
         print_list(versions)
@@ -303,30 +307,32 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
 @click.option("--force", is_flag=True)
 @click.pass_obj
 def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, force):
-    module = get_dependencies(
+    dependencies = get_dependencies(
         terraform_files=config["terraform_files"],
         patterns={
-            "module (registry)": r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
-            "module (git)": r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})'
+            "module": [
+                r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+                r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+            ],
         }
     )
     available_versions = sort_versions(
         get_available_versions(
-            target=module[name]["target"],
-            source=module[name]["source"],
+            target=dependencies["module"][name]["target"],
+            source=dependencies["module"][name]["source"],
             exclude_pre_release=exclude_prerelease
         )
     )
     allowed_versions = sort_versions(
         get_allowed_versions(
             available_versions,
-            module[name]["lower_constraint"],
-            module[name]["lower_constraint_operator"],
-            module[name]["upper_constraint"],
-            module[name]["upper_constraint_operator"],
+            dependencies["module"][name]["lower_constraint"],
+            dependencies["module"][name]["lower_constraint_operator"],
+            dependencies["module"][name]["upper_constraint"],
+            dependencies["module"][name]["upper_constraint_operator"],
         )
     )
-    current_value = module[name][attribute]
+    current_value = dependencies["module"][name][attribute]
     new_value = value
 
     if ignore_constraints:
@@ -338,14 +344,14 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
         print(f'The {attribute} is already set to "{new_value}".')
     elif force or new_value in versions or attribute == "constraint":
         update_version(
-            filepath=module[name]["filepath"],
-            code=module[name]["code"],
+            filepath=dependencies["module"][name]["filepath"],
+            code=dependencies["module"][name]["code"],
             attribute=attribute,
             value=value
         )
         print(f'The {attribute} was changed from "{current_value}" to "{new_value}".')
     elif versions == []:
-        print(f'There is no version available that meets the constraint "{module[name]["constraint"]}".')
+        print(f'There is no version available that meets the constraint "{dependencies["module"][name]["constraint"]}".')
     else:
         print(f'"{value}" is not an acceptable version.  Select from one of:')
         print_list(versions)

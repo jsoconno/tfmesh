@@ -42,7 +42,7 @@ module "lambda" {
 }
 
 module "s3" {
-  source = "github.com/jsoconno/terraform-module-aws-s3?ref=v1.1.0" # >=1.0.0, <2.0.0
+  source = "github.com/jsoconno/terraform-module-aws-s3?ref=v1.0.0" # >=1.0.0, <2.0.0
 # source = "../terraform-module-aws-s3"
 
   s3_access_iam_role_names = [

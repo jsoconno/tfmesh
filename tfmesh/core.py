@@ -56,27 +56,28 @@ def get_dependencies(terraform_files, patterns):
     for terraform_file in terraform_files:
         contents = open(terraform_file).read()
 
-        for target, pattern in patterns.items():
-            results = re.findall(pattern, contents, re.MULTILINE)
-            
-            for result in results:
-                if result != []:
-                    dependency = {
-                        "target": target,
-                        "filepath": terraform_file, 
-                        "filename": Path(terraform_file).name,
-                        "code": result[0],
-                        "name": result[1],
-                        "source": result[2],
-                        "version": result[3],
-                        "constraint": result[4],
-                        "lower_constraint_operator": result[5],
-                        "lower_constraint": result[6],
-                        "upper_constraint_operator": result[7],
-                        "upper_constraint": result[8]
-                    }
+        for target, pattern_list in patterns.items():
+            for pattern in pattern_list:
+                results = re.findall(pattern, contents, re.MULTILINE)
+                
+                for result in results:
+                    if result != []:
+                        dependency = {
+                            "target": target,
+                            "filepath": terraform_file, 
+                            "filename": Path(terraform_file).name,
+                            "code": result[0],
+                            "name": result[1],
+                            "source": result[2],
+                            "version": result[3],
+                            "constraint": result[4],
+                            "lower_constraint_operator": result[5],
+                            "lower_constraint": result[6],
+                            "upper_constraint_operator": result[7],
+                            "upper_constraint": result[8]
+                        }
 
-                    dependencies[target][result[1]] = dependency
+                        dependencies[target][result[1]] = dependency
 
     return dependencies
 
@@ -160,10 +161,10 @@ def get_available_versions(target, source=None, exclude_pre_release=False):
     github_token = os.environ["PAT_TOKEN"]
 
     # Pull available versions
-    if target == "module (git)":
+    if target == "module" and "github" in source:
         data = get_github_user_and_repo(source)
         available_versions = get_github_module_versions(data["user"], data["repo"], token=github_token)
-    elif target == "module (registry)":
+    elif target == "module":
         available_versions = get_terraform_module_versions(source)
     elif target == "provider":
         available_versions = get_terraform_provider_versions(source)
