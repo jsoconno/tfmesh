@@ -6,6 +6,7 @@ import re
 import operator
 import yaml
 from tabulate import tabulate
+from collections import defaultdict
 
 def color(color="end"):
     colors = {
@@ -27,7 +28,7 @@ def get_terraform_files(terraform_folder=None, file_pattern='*.tf'):
     Get a list of absolute paths to terraform files matching the given pattern.
     """
     if terraform_folder:
-        path = Path(terraform_folder)
+        path = Path(terraform_folder).absolute()
     else:
         path = Path(os.getcwd())
 
@@ -50,7 +51,7 @@ def get_config(config_file=".tfmesh.yaml"):
 def get_dependencies(terraform_files, patterns):
     """
     """
-    dependencies = {}
+    dependencies = defaultdict(dict)
 
     for terraform_file in terraform_files:
         contents = open(terraform_file).read()
@@ -75,7 +76,7 @@ def get_dependencies(terraform_files, patterns):
                         "upper_constraint": result[8]
                     }
 
-                    dependencies[result[1]] = dependency
+                    dependencies[target][result[1]] = dependency
 
     return dependencies
 

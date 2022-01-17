@@ -351,3 +351,7 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
         print_list(versions)
         raise click.Abort
 
+@cli.command("plan")
+@click.pass_obj
+def plan(config):
+    pass
