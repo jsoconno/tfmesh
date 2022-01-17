@@ -277,8 +277,8 @@ def update_version(filepath, code, attribute, value):
     """
     #TODO: Rename this function
     patterns = {
-        "version": r'(= *"*)([a-zA-Z]*[\S]+)(\" *#? *[=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)',
-        "constraint": r'(= *"*[a-zA-Z]*[\S]+\" *#? *)([=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)*()',
+        "version": r'()([a-zA-Z]?[0-9\.]+)(\" *#? *[=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)',
+        "constraint": r'([a-zA-Z]?[0-9\.]+\" *#? *)([=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)*()',
     }
 
     # Handle edge case where constraint is added to resource with no current constraint

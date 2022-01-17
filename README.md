@@ -179,6 +179,13 @@ The `plan` command provides details about what would happen if you applied confi
 
 * `tfmesh plan` - plans what version upgrades will happen.
 
+The following options are supported:
+
+* `--target TYPE NAME` - takes arguments `TYPE` and `NAME` to allow for specific update targets.  For example, `--target provider aws`.  Multiple targets are allowed.
+* `--exclude-prerelease` - ensures the set version is not a pre-release.
+* `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
+* `--no-color` - removes terminal color formatting.
+
 Example:
 ```cmd
 tfmesh plan
@@ -189,6 +196,14 @@ tfmesh plan
 The `apply` command applies version upgrades to the configuration based on the current versions and constraints.
 
 * `tfmesh apply` - applies version upgrades.
+
+The following options are supported:
+
+* `--target TYPE NAME` - takes arguments `TYPE` and `NAME` to allow for specific update targets.  For example, `--target provider aws`.  Multiple targets are allowed.
+* `--exclude-prerelease` - ensures the set version is not a pre-release.
+* `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
+* `--no-color` - removes terminal color formatting.
+* `--auto-approve` - approves upgrades without prompting for user input.
 
 Example:
 ```cmd
