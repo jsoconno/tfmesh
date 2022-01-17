@@ -1,0 +1,6 @@
+terraform_file_pattern: '*.tf'
+terraform_files:
+- /Users/justin.oconnor/Code/tfmesh/terraform/main.tf
+- /Users/justin.oconnor/Code/tfmesh/terraform/versions.tf
+- /Users/justin.oconnor/Code/tfmesh/terraform/variables.tf
+terraform_folder: terraform

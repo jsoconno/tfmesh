@@ -46,7 +46,11 @@ def set_config(config_file=".tfmesh.yaml", terraform_folder="", terraform_file_p
         yaml.dump(config, config_file, default_flow_style=False)
 
 def get_config(config_file=".tfmesh.yaml"):
-    return yaml.safe_load(open(config_file))
+    try:
+        config = yaml.safe_load(open(config_file))
+    except:
+        config = None
+    return config
 
 def get_dependencies(terraform_files, patterns):
     """
@@ -158,7 +162,10 @@ def get_available_versions(target, source=None, exclude_pre_release=False):
     Gets a list of available versions based on API calls to various endpoints.
     """
     # Get required environment variables
-    github_token = os.environ["PAT_TOKEN"]
+    try:
+        github_token = os.environ["PAT_TOKEN"]
+    except:
+        pass
 
     # Pull available versions
     if target == "modules" and "github" in source:
@@ -277,8 +284,8 @@ def update_version(filepath, code, attribute, value):
     """
     #TODO: Rename this function
     patterns = {
-        "version": r'()([a-zA-Z]?[0-9\.]+)(\" *#? *[=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)',
-        "constraint": r'([a-zA-Z]?[0-9\.]+\" *#? *)([=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)*()',
+        "version": r'(=|")([a-zA-Z]?[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+)?)(")',
+        "constraint": r'(" *#+ *)([=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)*()',
     }
 
     # Handle edge case where constraint is added to resource with no current constraint
