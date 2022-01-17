@@ -3,7 +3,6 @@ from tfmesh.core import *
 dry_run = True
 
 files = get_terraform_files("terraform")
-print(files)
 resources = get_dependencies(
     files,
     patterns = {
@@ -21,11 +20,7 @@ table = []
 
 for target, dependencies in resources.items():
     for dependency, data in dependencies.items():
-        print(dependency)
-        print(data["target"], data["source"])
         available_versions = get_available_versions(data["target"], data["source"])
-        print(f'available versions: {available_versions}')
-        print('\n')
         allowed_versions = get_allowed_versions(
             available_versions,
             data["lower_constraint"],
