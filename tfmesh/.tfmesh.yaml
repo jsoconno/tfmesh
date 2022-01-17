@@ -1,0 +1,6 @@
+terraform_file_pattern: '*.tf'
+terraform_files:
+- ../terraform/main.tf
+- ../terraform/versions.tf
+- ../terraform/variables.tf
+terraform_folder: ../terraform

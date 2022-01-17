@@ -263,17 +263,29 @@ class TestCore(unittest.TestCase):
 
         self.assertEqual(result, ["2.0", "1.10.0", "1.9.0", "1.1.1", "1.0.0"])
 
-    def test_get_depenencies(self):
+    def test_get_dependencies(self):
         """
         Test that terraform dependencies can be collected.
         """
         files = get_terraform_files(pathlib.Path(__file__).parent.resolve(), "*.tf")
 
-        dependencies = get_dependencies(files)
+        dependencies = get_dependencies(
+            files,
+            patterns = {
+                "terraform": [r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
+                "providers": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
+                "modules": [
+                    r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+                    r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})'
+                ]
+            }
+        )
         
         # This does not test everything, but at least makes sure it is basically working
-        self.assertEqual(len(dependencies), 5)
-        self.assertEqual("terraform", dependencies[0]["name"])
+        self.assertEqual(len(dependencies["terraform"]), 1)
+        self.assertEqual(len(dependencies["providers"]), 2)
+        self.assertEqual(len(dependencies["modules"]), 2)
+        self.assertEqual("terraform", dependencies["terraform"]["terraform"]["name"])
 
 if __name__ == '__main__':
     unittest.main()

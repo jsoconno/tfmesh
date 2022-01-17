@@ -4,7 +4,9 @@ import requests
 import json
 import re
 import operator
+import yaml
 from tabulate import tabulate
+from collections import defaultdict
 
 def color(color="end"):
     colors = {
@@ -26,13 +28,58 @@ def get_terraform_files(terraform_folder=None, file_pattern='*.tf'):
     Get a list of absolute paths to terraform files matching the given pattern.
     """
     if terraform_folder:
-        path = Path(terraform_folder)
+        path = Path(terraform_folder).absolute()
     else:
         path = Path(os.getcwd())
 
     file_list = [str(x) for x in path.glob(file_pattern) if x.is_file()]
     
     return file_list
+
+def set_config(config_file=".tfmesh.yaml", terraform_folder="", terraform_file_pattern="*.tf"):
+    with open(config_file, 'w') as config_file:
+        config = {
+            "terraform_folder": terraform_folder,
+            "terraform_file_pattern": terraform_file_pattern,
+            "terraform_files": get_terraform_files(terraform_folder, terraform_file_pattern)
+        }
+        yaml.dump(config, config_file, default_flow_style=False)
+
+def get_config(config_file=".tfmesh.yaml"):
+    return yaml.safe_load(open(config_file))
+
+def get_dependencies(terraform_files, patterns):
+    """
+    """
+    dependencies = defaultdict(dict)
+
+    for terraform_file in terraform_files:
+        contents = open(terraform_file).read()
+
+        for target, pattern_list in patterns.items():
+            for pattern in pattern_list:
+                results = re.findall(pattern, contents, re.MULTILINE)
+                
+                for result in results:
+                    if result != []:
+                        dependency = {
+                            "target": target,
+                            "filepath": terraform_file, 
+                            "filename": Path(terraform_file).name,
+                            "code": result[0],
+                            "name": result[1],
+                            "source": result[2],
+                            "version": result[3],
+                            "constraint": result[4],
+                            "lower_constraint_operator": result[5],
+                            "lower_constraint": result[6],
+                            "upper_constraint_operator": result[7],
+                            "upper_constraint": result[8]
+                        }
+
+                        dependencies[target][result[1]] = dependency
+
+    return dependencies
 
 def get_semantic_version(version):
     """
@@ -93,60 +140,6 @@ def get_terraform_versions():
 
     return [version[0] for version in versions]
 
-def get_dependencies(terraform_files):
-    """
-    Gets a list of dependencies that match a semantic version pattern.
-    """
-    terraform = r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'
-    terraform_providers = r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'
-    terraform_modules = r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})'
-    git_modules = r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})'
-    
-    patterns = [
-        terraform,
-        terraform_providers,
-        terraform_modules,
-        git_modules,
-    ]
-
-    dependencies = []
-
-    for terraform_file in terraform_files:
-        with open(terraform_file) as f:
-            path = Path(terraform_file)
-            contents = f.read()
-
-            for pattern in patterns:
-                results = re.findall(pattern, contents, re.MULTILINE)
-
-                if pattern == terraform:
-                    target = "terraform"
-                elif pattern == terraform_providers:
-                    target = "provider"
-                elif pattern == terraform_modules:
-                    target = "module (registry)"
-                elif pattern == git_modules:
-                    target = "module (git)"
-
-                for result in results:
-                    data = {
-                        "target": target,
-                        "file_path": str(path),
-                        "file_name:": path.name,
-                        "code": result[0],
-                        "name": result[1],
-                        "source": result[2],
-                        "version": result[3],
-                        "constraint": result[4],
-                        "lower_constraint_operator": result[5],
-                        "lower_constraint": result[6],
-                        "upper_constraint_operator": result[7],
-                        "upper_constraint": result[8]
-                    }
-                    dependencies.append(data)
-    
-    return dependencies
-
 def get_github_user_and_repo(source):
     """
     Returns a user and repo based on source.
@@ -160,7 +153,7 @@ def get_github_user_and_repo(source):
 
     return data
 
-def get_available_versions(target, source=None, exclude_pre_release=True):
+def get_available_versions(target, source=None, exclude_pre_release=False):
     """
     Gets a list of available versions based on API calls to various endpoints.
     """
@@ -168,12 +161,12 @@ def get_available_versions(target, source=None, exclude_pre_release=True):
     github_token = os.environ["PAT_TOKEN"]
 
     # Pull available versions
-    if target == "module (git)":
+    if target == "modules" and "github" in source:
         data = get_github_user_and_repo(source)
         available_versions = get_github_module_versions(data["user"], data["repo"], token=github_token)
-    elif target == "module (registry)":
+    elif target == "modules":
         available_versions = get_terraform_module_versions(source)
-    elif target == "provider":
+    elif target == "providers":
         available_versions = get_terraform_provider_versions(source)
     elif target == "terraform":
         available_versions = get_terraform_versions()
@@ -200,11 +193,7 @@ def get_allowed_versions(available_versions, lower_constraint="", lower_constrai
         # Ensures that pre-release versions are removed if there are no constraints.
         allowed_versions = [version for version in available_versions if get_semantic_version(version)]
 
-    # Add logic that applies global filters
-
     return allowed_versions
-
-    # Apply logic to select the correct bump
 
 def compare_versions(a, op, b):
     """
@@ -252,15 +241,23 @@ def tuple_math(a, op, b):
 
     return result
 
-def sort_versions(versions):
+def sort_versions(versions, reverse=True):
     """
     Sorts lists of versions based on the semantic version.  Normal sort does not work because of versions like 1.67.0 vs. 1.9.0.
     """
     tuple_versions = [get_semantic_version(version) for version in versions]
-    versions = [x for _, x in sorted(zip(tuple_versions, versions), reverse=True)]
+    versions = [x for _, x in sorted(zip(tuple_versions, versions), reverse=reverse)]
 
     return versions
 
+def print_list(versions, top=None):
+    """
+    """
+    if top:
+        versions = versions[:top]
+
+    for version in versions:
+        print(f'- {version}')
 
 def get_latest_version(versions):
     """
@@ -274,20 +271,35 @@ def get_latest_version(versions):
 
     return latest_version
 
-def update_version(file_path, code, current_tag, latest_tag):
+def update_version(filepath, code, attribute, value):
     """
     Reads existing terraform files, updates versions, and saves back.
     """
+    #TODO: Rename this function
+    patterns = {
+        "version": r'()([a-zA-Z]?[0-9\.]+)(\" *#? *[=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)',
+        "constraint": r'([a-zA-Z]?[0-9\.]+\" *#? *)([=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)*()',
+    }
+
+    # Handle edge case where constraint is added to resource with no current constraint
+    if attribute == "constraint":
+        result = re.findall(patterns[attribute], code)
+        current_constraint = result[0][1]
+        if current_constraint == "" and "#" not in value:
+            value = f' # {value}'
+
     # Read in the file
-    with open(file_path, 'r') as f:
+    with open(filepath, 'r') as f:
         data = f.read()
 
     # Replace the target string
-    new_code = code.replace(current_tag, latest_tag)
+    new_code = re.sub(patterns[attribute], r'\1__value__\3', code)
+    new_code = new_code.replace("__value__", value)
+
     data = data.replace(code, new_code)
 
     # Write the file out again
-    with open(file_path, 'w') as f:
+    with open(filepath, 'w') as f:
         f.write(data)
 
 def get_status(current_version, latest_available_version, latest_allowed_version, no_color=False):
