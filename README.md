@@ -213,16 +213,19 @@ tfmesh apply
 # Example output
 
 ```
-+-------------------+-------------+---------+-----------+-----------------+---------+-------------------------+
-|     resource      |   module    | current |  latest   |   constraint    | latest  |         status          |
-|       type        |    name     | version | available |                 | allowed |                         |
-+-------------------+-------------+---------+-----------+-----------------+---------+-------------------------+
-| module (registry) |   consul    |  0.5.0  |  0.11.0   | >=0.2.0, <0.6.0 |  0.5.0  | (.) pinned out-of-date  |
-| module (registry) | conventions |  6.0.0  |   6.0.0   |     >=5.0.0     |  6.0.0  |     (*) up-to-date      |
-|     terraform     |  terraform  |  1.1.3  |   1.1.3   |     >=1.0.0     |  1.1.3  |     (*) up-to-date      |
-|     provider      |     aws     | 3.71.0  |  3.71.0   |      ~>3.0      | 3.71.0  |     (*) up-to-date      |
-|     provider      |   azurerm   |  1.9.0  |  2.91.0   | >=3.0.0, <2.0.0 |         | (x) no suitable version |
-+-------------------+-------------+---------+-----------+-----------------+---------+-------------------------+
++-----------+-------------+--------------+--------------+-----------------+--------------+-------------------------+
+| resource  |   module    |   current    |    latest    |   constraint    |    latest    |         status          |
+|   type    |    name     |   version    |  available   |                 |   allowed    |                         |
++-----------+-------------+--------------+--------------+-----------------+--------------+-------------------------+
+|  modules  |   consul    |    0.5.0     |    0.11.0    |     ~>0.5.0     |    0.5.0     | (.) pinned out-of-date  |
+|  modules  | conventions | 6.0.0-pre001 | 6.0.0-pre001 |      ~>6.0      | 6.0.0-pre001 |     (*) up-to-date      |
+|  modules  | api_gateway |    v1.0.2    |    v1.0.2    |                 |    v1.0.2    |     (*) up-to-date      |
+|  modules  |   lambda    |    v1.1.2    |    v1.1.2    |      ~>1.1      |    v1.1.2    |     (*) up-to-date      |
+|  modules  |     s3      |    v1.1.0    |    v1.1.0    | >=1.0.0, <2.0.0 |    v1.1.0    |     (*) up-to-date      |
+| terraform |  terraform  |    1.1.3     |    1.1.3     |     >=1.0.0     |    1.1.3     |     (*) up-to-date      |
+| providers |     aws     |    3.72.0    |    3.72.0    |     ~>3.70      |    3.72.0    |     (*) up-to-date      |
+| providers |   azurerm   |    1.9.0     |    2.92.0    | >=3.0.0, <2.0.0 |              | (x) no suitable version |
++-----------+-------------+--------------+--------------+-----------------+--------------+-------------------------+
 ```
 
 # Version status
