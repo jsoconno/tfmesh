@@ -86,81 +86,113 @@ The tfmesh cli provides a convenient way of working with version updates in Terr
 
 ## Base command
 
-* `tfmesh` - this would be the root command.
-  * `--version` - returns the cli version.
-  * `--help` - returns helpful information.
+* `tfmesh` - the root command group.
 
-## Get command
+The following options are supported:
 
-* `get` - action for getting information about the configuration and config versions.
-  * `terraform` - returns all details about the terraform executable.
-    * `--filepath` - returns the absolute path to the Terraform configuration file.
-    * `--file` - returns the name of the Terraform file.
-    * `--code` - returns the configuration code block.
-    * `--source` - returns the source for the resource.
-    * `--version` - returns the version.
-    * `--constraints` - returns version constraints.
-    * `--available-versions` - returns available versions.
-    * `--allowed-versions` - returns allowed versions based on constraints.
-  * `provider` - returns a list of tracked providers.
-    * `name (optional)` - returns all details about a given provider.
-      * `--filepath` - returns the absolute path to the Terraform configuration file.
-      * `--file` - returns the name of the Terraform file.
-      * `--code` - returns the configuration code block.
-      * `--source` - returns the source for the resource.
-      * `--version` - returns the version.
-      * `--constraints` - returns version constraints.
-      * `--available-versions` - returns available versions.
-      * `--allowed-versions` - returns allowed versions based on constraints.
-  * `module` - returns a list of tracked modules.
-    * `name (optional)` - returns all details about a given module.
-      * `--filepath` - returns the absolute path to the Terraform configuration file.
-      * `--file` - returns the name of the Terraform file.
-      * `--code` - returns the configuration code block.
-      * `--source` - returns the source for the resource.
-      * `--version` - returns the version.
-      * `--constraints` - returns version constraints.
-      * `--available-versions` - returns available versions.
-      * `--allowed-versions` - returns allowed versions.
+* `--version` - returns the cli version.
+* `--help` - returns helpful information.
+
+## Init command
+
+The `init` command creates a yaml file that stores basic information about the files that contain Terraform configurations.
+
+* `tfmesh init` - creates a yaml file used for storing configuration file details.
+
+The following options are supported:
+
+* `--config-file` - the name of the configuration file (defaults to ".tfmesh.yaml")
+* `--terraform-folder` - the name of the folder where Terraform files are located (defaults to the current directory).
+* `--terraform-file-pattern` - the pattern for matching Terraform files within the directory (defaults to *.tf).
+* `--force` - allows for non-interactive reset of the configuration file for automation purposes.
 
 Example:
 ```cmd
-tfmesh get module s3 --constraints
+tfmesh init --terraform-folder terraform --force
+```
+
+## Get command
+
+The `get` command allows you to retrieve information about resources in your configuration that reference a version.
+
+* `tfmesh get terraform ATTRIBUTE` - returns a given attribute for the Terraform executable (see attributes below).
+* `tfmesh get providers` - returns a list of all tracked providers.
+* `tfmesh get provider NAME ATTRIBUTE` - returns a given attribute for a specific provider (see attributes below).
+* `tfmesh get modules` - returns a list of all tracked modules.
+* `tfmesh get module NAME ATTRIBUTE` - returns a given attribute for a specific module (see attributes below).
+
+The following attributes are supported:
+
+* `target` - returns the type of resource being managed.
+* `filepath` - returns the absolute path to the Terraform configuration file.
+* `filename` - returns the name of the Terraform file.
+* `code` - returns the configuration code block.
+* `name` - returns the name of the resource.
+* `source` - returns the source for the resource.
+* `version` - returns the version.
+* `versions` - returns a list of available versions.
+* `constraint` - returns the full version constraint.
+* `lower_constraint_operator` - returns the lower constraint operator (e.g. ">=").
+* `lower_constraint` - returns the lower constraint (e.g. "1.0.0").
+* `upper_constraint_operator` - returns the upper constraint operator (e.g. "<").
+* `upper_constraint` - returns the lower constraint (e.g. "2.0.0").
+
+The following options are supported:
+
+* `--allowed` - returns only allowed versions when used in conjunction with the versions attribute.
+* `--exclude-prerelease` - returns all non-prerelease versions when used in conjunction with the versions attribute.
+* `--top` - returns the top n number of results when used in conjunction with the versions attribute.
+
+Example:
+```cmd
+tfmesh get module s3 versions --allowed --exclude-prerelease --top 10
 ```
 
 ## Set command
 
-* `set` - action for setting terraform versions and constraints.
-  * `terraform`
-    * `--version`
-    * `--constraint`
-  * `provider`
-    * `name`
-      * `--version`
-      * `--constraint`
-  * `module`
-    * `name`
-      * `--version`
-      * `--constraint`
+The `set` command allows you to update your configurations resource versions and constraints.  Versions and constraints are validated to ensure they are set with acceptable values.
+
+* `tfmesh set terraform ATTRIBUTE VALUE` - sets a given attribute for the Terraform executable to a given value (see attributes below).
+* `tfmesh set provider NAME ATTRIBUTE VALUE` - sets a given attribute for a specific provider to a given value (see attributes below).
+* `tfmesh set module NAME ATTRIBUTE VALUE` - sets a given attribute for a specific module to a given value (see attributes below).
+
+The following attributes are supported:
+
+* `version` - returns the version.
+* `constraint` - returns the full version constraint.
+
+The following options are supported:
+
+* `--exclude-prerelease` - ensures the set version is not a pre-release.
+* `--what-if` - allows for a dry run to see what would happen before making changes.
+* `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
+* `--force` - allows the version to be set to any value without validation.
 
 Example:
 ```cmd
-tfmesh set s3 --version 1.0.0
+tfmesh set s3 version "1.0.0" --ignore-constraints
 ```
 
-## Upgrade command
+## Plan command
 
-* `upgrade` - action for upgrading terraform versions based on constraints.
-  * `all` - updates all terraform, providers, and modules.
-  * `terraform` - updates terraform.
-  * `provider` - updates providers.
-  * `module` - updates modules.
+The `plan` command provides details about what would happen if you applied configuration upgrades.
 
-All commands support a `--dry-run` flag that will provide terminal output of what would happen if the update command was ran.  They also support a `--verbose` flag that outputs additional configuration information to the terminal.
+* `tfmesh plan` - plans what version upgrades will happen.
 
 Example:
 ```cmd
-tfmesh upgrade all
+tfmesh plan
+```
+
+## Apply command
+
+The `apply` command applies version upgrades to the configuration based on the current versions and constraints.
+
+* `tfmesh apply` - applies version upgrades.
+
+Example:
+```cmd
+tfmesh apply
 ```
 
 # Example output
