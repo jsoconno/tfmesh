@@ -230,7 +230,7 @@ tfmesh apply
 
 # Version status
 
-TFMesh will evaluate versions in your configuration to determine the current version, latest available version, and latest allowed version.
+Terraform Mesh will evaluate versions in your configuration to determine the current version, latest available version, and latest allowed version.
 
 * `current version` - The current version set in the configuration.
 * `latest available` - The latest available version available for Terraform or a given provider or module.
