@@ -190,3 +190,6 @@ terraform.rc
 
 # Mac
 .DS_Store
+
+#Terraform Mesh
+.tfmesh.yaml
