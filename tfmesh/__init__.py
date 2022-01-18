@@ -439,7 +439,7 @@ def plan(config, target, exclude_prerelease, ignore_constraints, no_color):
             # Versions
             current_version = attributes["version"]
             latest_available_version = get_latest_version(available_versions)
-            latest_allowed_version = get_latest_version(allowed_versions)
+            latest_allowed_version = get_latest_version(versions)
 
             status = get_status(current_version, latest_available_version, latest_allowed_version, no_color=no_color)
 
@@ -455,6 +455,8 @@ def plan(config, target, exclude_prerelease, ignore_constraints, no_color):
                         pass
 
     print('\n')
+    if ignore_constraints:
+        print("Ignoring constraints!")
     print("This was a plan only.  No files were updated.")
     table = tabulate(table, headers=table_headers, tablefmt='pretty')
     print(table)
@@ -510,7 +512,7 @@ def apply(config, target, exclude_prerelease, ignore_constraints, no_color, auto
                 # Versions
                 current_version = attributes["version"]
                 latest_available_version = get_latest_version(available_versions)
-                latest_allowed_version = get_latest_version(allowed_versions)
+                latest_allowed_version = get_latest_version(versions)
 
                 status = get_status(current_version, latest_available_version, latest_allowed_version, no_color=no_color)
                 
@@ -542,6 +544,8 @@ def apply(config, target, exclude_prerelease, ignore_constraints, no_color, auto
                             pass
 
         print('\n')
+        if ignore_constraints:
+            print("Ignoring constraints!")
         print("Configuration version were upgraded!")
         table = tabulate(table, headers=table_headers, tablefmt='pretty')
         print(table)
