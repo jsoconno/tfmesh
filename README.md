@@ -1,8 +1,18 @@
 # Terraform Mesh
 
-Terraform Mesh is a built-for-purpose Terraform dependency manager that provides a simple and powerful CLI for automating dependency updates that integrates with modern CI/CD processes.
+A mesh is an interlaced structure. A network of interconnected things. As a verb, it can mean to be locked together or engaged with another. One way these descriptions can be manifested in Cloud Engineering is in the various dependencies that go into an infrastructure configuration. Dependency management is an important topic when thinking about how you mature, scale, and secure your automated cloud deployments.  
 
-The project is currently under **active development** and aims to eliminate the toil of keeping cloud infrastructure dependencies up-to-date.  In order to test updates to the CLI, make changes and run `pip3 install --editable .` locally.
+**Terraform Mesh** (or tfmesh for short) is an open source command line interface tool designed to make Terraform version management simple and effective.  It integrates beautifully with you preferred ways of working locally, pre-commit hooks, and CI/CD pipelines.  The tool supports all Terraform native version constraint operators as well as public and private sources for providers and modules.
+
+The project is currently under **active development** and aims to the preferred choice for App Developers and Cloud Engineers working with Terraform as an infrastructure-as-code platform.
+
+To test the command line interface, you can run the following from the root folder locally:
+
+```cmd
+pip3 install --editable .
+```
+
+From there you can start to run `tfmesh` commands.
 
 ![Latest tag](https://img.shields.io/github/v/tag/jsoconno/tfmesh)
 ![Lines of code](https://img.shields.io/tokei/lines/github/jsoconno/tfmesh)
@@ -79,6 +89,8 @@ module "consul" {
 ```
 
 It is recommended to use Terraform Mesh comment syntax over the Terraform default options (such as specifying the version constraints in the version attribute itself) to give users greater control over when versions are updated.
+
+It is also recommended to make all updates to versions and constraints using the `set` commands packaged with the Terraform Mesh CLI.
 
 # Terraform Mesh CLI
 
@@ -170,7 +182,7 @@ The following options are supported:
 
 Example:
 ```cmd
-tfmesh set s3 version "1.0.0" --ignore-constraints
+tfmesh set module s3 version "1.0.0" --ignore-constraints
 ```
 
 ## Plan command

@@ -9,6 +9,7 @@ import yaml
 from tfmesh.core import *
 
 @click.group("cli", invoke_without_command=True)
+@click.version_option()
 @click.pass_context
 def cli(ctx):
     ctx.obj = get_config()
@@ -19,6 +20,9 @@ def cli(ctx):
 @click.option("--terraform-file-pattern", default="*.tf")
 @click.option("--force", is_flag=True)
 def init(config_file, terraform_folder, terraform_file_pattern, force):
+    """
+    Initializes a file with details about the configuration.
+    """
     config_file = Path(config_file)
     if config_file.is_file():
         if force:
@@ -35,10 +39,16 @@ def init(config_file, terraform_folder, terraform_file_pattern, force):
 
 @cli.group("get")
 def get():
+    """
+    Gets attributes for a given resource.
+    """
     pass
 
 @cli.group("set")
 def set():
+    """
+    Sets attributes for a given resource.
+    """
     pass
 
 @get.command("terraform")
@@ -48,6 +58,9 @@ def set():
 @click.option("--top", type=int, default=5)
 @click.pass_obj
 def terraform(config, attribute, allowed, exclude_prerelease, top):
+    """
+    Gets a given attribute for the Terraform executable.
+    """
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -65,6 +78,9 @@ def terraform(config, attribute, allowed, exclude_prerelease, top):
 @get.command("providers")
 @click.pass_obj
 def providers(config):
+    """
+    Lists all tracked providers.
+    """
     resources = get_resources(
         terraform_files=config["terraform_files"],
         patterns={
@@ -81,6 +97,9 @@ def providers(config):
 @click.option("--top", type=int, default=5)
 @click.pass_obj
 def provider(config, name, attribute, allowed, exclude_prerelease, top):
+    """
+    Gets a given attribute for provider.
+    """
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -98,6 +117,9 @@ def provider(config, name, attribute, allowed, exclude_prerelease, top):
 @get.command("modules")
 @click.pass_obj
 def modules(config):
+    """
+    Lists all tracked modules.
+    """
     resources = get_resources(
         terraform_files=config["terraform_files"],
         patterns={
@@ -117,6 +139,9 @@ def modules(config):
 @click.option("--top", type=int, default=5)
 @click.pass_obj
 def module(config, name, attribute, allowed, exclude_prerelease, top):
+    """
+    Gets a given attribute for module.
+    """
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -143,6 +168,9 @@ def module(config, name, attribute, allowed, exclude_prerelease, top):
 @click.option("--force", is_flag=True)
 @click.pass_obj
 def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_constraints, force):
+    """
+    Sets the version or constraint for the Terraform executable.
+    """
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -169,6 +197,9 @@ def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_cons
 @click.option("--force", is_flag=True)
 @click.pass_obj
 def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, force):
+    """
+    Sets the version or constraint for a given provider.
+    """
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -195,6 +226,9 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
 @click.option("--force", is_flag=True)
 @click.pass_obj
 def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, force):
+    """
+    Sets the version or constraint for a given module.
+    """
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -221,6 +255,9 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
 @click.option("--no-color", is_flag=True)
 @click.pass_obj
 def plan(config, target, exclude_prerelease, ignore_constraints, no_color):
+    """
+    Plans what version changes will be made to the configuration.
+    """
     table_headers = ["resource\ntype", "module\nname", "current\nversion", "latest\navailable", "constraint", "latest\nallowed", "status"]
     table = []
     dependencies = get_dependency_attributes(
@@ -258,7 +295,7 @@ def plan(config, target, exclude_prerelease, ignore_constraints, no_color):
             # Versions
             current_version = attributes["version"]
             latest_available_version = get_latest_version(available_versions)
-            latest_allowed_version = get_latest_version(allowed_versions)
+            latest_allowed_version = get_latest_version(versions)
 
             status = get_status(current_version, latest_available_version, latest_allowed_version, no_color=no_color)
 
@@ -274,6 +311,8 @@ def plan(config, target, exclude_prerelease, ignore_constraints, no_color):
                         pass
 
     print('\n')
+    if ignore_constraints:
+        print("Ignoring constraints!")
     print("This was a plan only.  No files were updated.")
     table = tabulate(table, headers=table_headers, tablefmt='pretty')
     print(table)
@@ -287,6 +326,9 @@ def plan(config, target, exclude_prerelease, ignore_constraints, no_color):
 @click.option("--auto-approve", is_flag=True)
 @click.pass_obj
 def apply(config, target, exclude_prerelease, ignore_constraints, no_color, auto_approve):
+    """
+    Applies configuration version changes.
+    """
     table_headers = ["resource\ntype", "module\nname", "current\nversion", "latest\navailable", "constraint", "latest\nallowed", "status"]
     table = []
     dependencies = get_dependency_attributes(
@@ -325,7 +367,7 @@ def apply(config, target, exclude_prerelease, ignore_constraints, no_color, auto
                 # Versions
                 current_version = attributes["version"]
                 latest_available_version = get_latest_version(available_versions)
-                latest_allowed_version = get_latest_version(allowed_versions)
+                latest_allowed_version = get_latest_version(versions)
 
                 status = get_status(current_version, latest_available_version, latest_allowed_version, no_color=no_color)
                 
@@ -357,6 +399,8 @@ def apply(config, target, exclude_prerelease, ignore_constraints, no_color, auto
                             pass
 
         print('\n')
+        if ignore_constraints:
+            print("Ignoring constraints!")
         print("Configuration version were upgraded!")
         table = tabulate(table, headers=table_headers, tablefmt='pretty')
         print(table)
