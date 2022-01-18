@@ -263,13 +263,13 @@ class TestCore(unittest.TestCase):
 
         self.assertEqual(result, ["2.0", "1.10.0", "1.9.0", "1.1.1", "1.0.0"])
 
-    def test_get_dependencies(self):
+    def test_get_dependency_attributes(self):
         """
         Test that terraform dependencies can be collected.
         """
         files = get_terraform_files(pathlib.Path(__file__).parent.resolve(), "*.tf")
 
-        dependencies = get_dependencies(
+        dependencies = get_dependency_attributes(
             files,
             patterns = {
                 "terraform": [r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
