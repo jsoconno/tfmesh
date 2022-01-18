@@ -54,23 +54,23 @@ def terraform(config, attribute, allowed, exclude_prerelease, top):
             "terraform": [r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)'],
         }
     )
-    available_versions = sort_versions(
-        get_available_versions(
-            target=dependencies["terraform"]["terraform"]["target"],
-            source=dependencies["terraform"]["terraform"]["source"],
-            exclude_pre_release=exclude_prerelease
-        )
-    )
-    allowed_versions = sort_versions(
-        get_allowed_versions(
-            available_versions,
-            dependencies["terraform"]["terraform"]["lower_constraint"],
-            dependencies["terraform"]["terraform"]["lower_constraint_operator"],
-            dependencies["terraform"]["terraform"]["upper_constraint"],
-            dependencies["terraform"]["terraform"]["upper_constraint_operator"],
-        )
-    )
     if attribute == "versions":
+        available_versions = sort_versions(
+            get_available_versions(
+                target=dependencies["terraform"]["terraform"]["target"],
+                source=dependencies["terraform"]["terraform"]["source"],
+                exclude_pre_release=exclude_prerelease
+            )
+        )
+        allowed_versions = sort_versions(
+            get_allowed_versions(
+                available_versions,
+                dependencies["terraform"]["terraform"]["lower_constraint"],
+                dependencies["terraform"]["terraform"]["lower_constraint_operator"],
+                dependencies["terraform"]["terraform"]["upper_constraint"],
+                dependencies["terraform"]["terraform"]["upper_constraint_operator"],
+            )
+        )
         if allowed:
             print_list(allowed_versions, top)
         else:
@@ -105,23 +105,23 @@ def provider(config, name, attribute, allowed, exclude_prerelease, top):
             "providers": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
         }
     )
-    available_versions = sort_versions(
-        get_available_versions(
-            target=dependencies["providers"][name]["target"],
-            source=dependencies["providers"][name]["source"],
-            exclude_pre_release=exclude_prerelease
-        )
-    )
-    allowed_versions = sort_versions(
-        get_allowed_versions(
-            available_versions,
-            dependencies["providers"][name]["lower_constraint"],
-            dependencies["providers"][name]["lower_constraint_operator"],
-            dependencies["providers"][name]["upper_constraint"],
-            dependencies["providers"][name]["upper_constraint_operator"],
-        )
-    )
     if attribute == "versions":
+        available_versions = sort_versions(
+            get_available_versions(
+                target=dependencies["providers"][name]["target"],
+                source=dependencies["providers"][name]["source"],
+                exclude_pre_release=exclude_prerelease
+            )
+        )
+        allowed_versions = sort_versions(
+            get_allowed_versions(
+                available_versions,
+                dependencies["providers"][name]["lower_constraint"],
+                dependencies["providers"][name]["lower_constraint_operator"],
+                dependencies["providers"][name]["upper_constraint"],
+                dependencies["providers"][name]["upper_constraint_operator"],
+            )
+        )
         if allowed:
             print_list(allowed_versions, top)
         else:
@@ -162,21 +162,23 @@ def module(config, name, attribute, allowed, exclude_prerelease, top):
             ],
         }
     )
-    available_versions = sort_versions(get_available_versions(
-        target=dependencies["modules"][name]["target"],
-        source=dependencies["modules"][name]["source"],
-        exclude_pre_release=exclude_prerelease)
-    )
-    allowed_versions = sort_versions(
-        get_allowed_versions(
-            available_versions,
-            dependencies["modules"][name]["lower_constraint"],
-            dependencies["modules"][name]["lower_constraint_operator"],
-            dependencies["modules"][name]["upper_constraint"],
-            dependencies["modules"][name]["upper_constraint_operator"],
-        )
-    )
     if attribute == "versions":
+        available_versions = sort_versions(
+            get_available_versions(
+                target=dependencies["modules"][name]["target"],
+                source=dependencies["modules"][name]["source"],
+                exclude_pre_release=exclude_prerelease
+            )
+        )
+        allowed_versions = sort_versions(
+            get_allowed_versions(
+                available_versions,
+                dependencies["modules"][name]["lower_constraint"],
+                dependencies["modules"][name]["lower_constraint_operator"],
+                dependencies["modules"][name]["upper_constraint"],
+                dependencies["modules"][name]["upper_constraint_operator"],
+            )
+        )
         if allowed:
             print_list(allowed_versions, top)
         else:
@@ -199,29 +201,32 @@ def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_cons
             "terraform": [r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)'],
         }
     )
-    available_versions = sort_versions(
-        get_available_versions(
-            target=dependencies["terraform"]["terraform"]["target"],
-            source=dependencies["terraform"]["terraform"]["source"],
-            exclude_pre_release=exclude_prerelease
+    if attribute == "version":
+        available_versions = sort_versions(
+            get_available_versions(
+                target=dependencies["terraform"]["terraform"]["target"],
+                source=dependencies["terraform"]["terraform"]["source"],
+                exclude_pre_release=exclude_prerelease
+            )
         )
-    )
-    allowed_versions = sort_versions(
-        get_allowed_versions(
-            available_versions,
-            dependencies["terraform"]["terraform"]["lower_constraint"],
-            dependencies["terraform"]["terraform"]["lower_constraint_operator"],
-            dependencies["terraform"]["terraform"]["upper_constraint"],
-            dependencies["terraform"]["terraform"]["upper_constraint_operator"],
+        allowed_versions = sort_versions(
+            get_allowed_versions(
+                available_versions,
+                dependencies["terraform"]["terraform"]["lower_constraint"],
+                dependencies["terraform"]["terraform"]["lower_constraint_operator"],
+                dependencies["terraform"]["terraform"]["upper_constraint"],
+                dependencies["terraform"]["terraform"]["upper_constraint_operator"],
+            )
         )
-    )
+        if ignore_constraints:
+            versions = available_versions
+        else:
+            versions = allowed_versions
+    else:
+        versions = []
+
     current_value = dependencies["terraform"]["terraform"][attribute]
     new_value = value
-
-    if ignore_constraints:
-        versions = available_versions
-    else:
-        versions = allowed_versions
 
     if current_value == new_value:
         print(f'The {attribute} is already set to "{new_value}".')
@@ -256,29 +261,32 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
             "providers": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
         }
     )
-    available_versions = sort_versions(
-        get_available_versions(
-            target=dependencies["providers"][name]["target"],
-            source=dependencies["providers"][name]["source"],
-            exclude_pre_release=exclude_prerelease
+    if attribute == "version":
+        available_versions = sort_versions(
+            get_available_versions(
+                target=dependencies["providers"][name]["target"],
+                source=dependencies["providers"][name]["source"],
+                exclude_pre_release=exclude_prerelease
+            )
         )
-    )
-    allowed_versions = sort_versions(
-        get_allowed_versions(
-            available_versions,
-            dependencies["providers"][name]["lower_constraint"],
-            dependencies["providers"][name]["lower_constraint_operator"],
-            dependencies["providers"][name]["upper_constraint"],
-            dependencies["providers"][name]["upper_constraint_operator"],
+        allowed_versions = sort_versions(
+            get_allowed_versions(
+                available_versions,
+                dependencies["providers"][name]["lower_constraint"],
+                dependencies["providers"][name]["lower_constraint_operator"],
+                dependencies["providers"][name]["upper_constraint"],
+                dependencies["providers"][name]["upper_constraint_operator"],
+            )
         )
-    )
+        if ignore_constraints:
+            versions = available_versions
+        else:
+            versions = allowed_versions
+    else:
+        versions = []
+
     current_value = dependencies["providers"][name][attribute]
     new_value = value
-
-    if ignore_constraints:
-        versions = available_versions
-    else:
-        versions = allowed_versions
 
     if current_value == new_value:
         print(f'The {attribute} is already set to "{new_value}".')
@@ -316,29 +324,32 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
             ],
         }
     )
-    available_versions = sort_versions(
-        get_available_versions(
-            target=dependencies["modules"][name]["target"],
-            source=dependencies["modules"][name]["source"],
-            exclude_pre_release=exclude_prerelease
+    if attribute == "version":
+        available_versions = sort_versions(
+            get_available_versions(
+                target=dependencies["modules"][name]["target"],
+                source=dependencies["modules"][name]["source"],
+                exclude_pre_release=exclude_prerelease
+            )
         )
-    )
-    allowed_versions = sort_versions(
-        get_allowed_versions(
-            available_versions,
-            dependencies["modules"][name]["lower_constraint"],
-            dependencies["modules"][name]["lower_constraint_operator"],
-            dependencies["modules"][name]["upper_constraint"],
-            dependencies["modules"][name]["upper_constraint_operator"],
+        allowed_versions = sort_versions(
+            get_allowed_versions(
+                available_versions,
+                dependencies["modules"][name]["lower_constraint"],
+                dependencies["modules"][name]["lower_constraint_operator"],
+                dependencies["modules"][name]["upper_constraint"],
+                dependencies["modules"][name]["upper_constraint_operator"],
+            )
         )
-    )
+        if ignore_constraints:
+            versions = available_versions
+        else:
+            versions = allowed_versions
+    else:
+        versions = []
+
     current_value = dependencies["modules"][name][attribute]
     new_value = value
-
-    if ignore_constraints:
-        versions = available_versions
-    else:
-        versions = allowed_versions
 
     if current_value == new_value:
         print(f'The {attribute} is already set to "{new_value}".')
