@@ -3,7 +3,7 @@ from tfmesh.core import *
 dry_run = True
 
 files = get_terraform_files("terraform")
-resources = get_dependencies(
+resources = get_dependency_attributes(
     files,
     patterns = {
         "terraform": [r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],

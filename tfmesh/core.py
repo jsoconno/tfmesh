@@ -9,6 +9,8 @@ from tabulate import tabulate
 from collections import defaultdict
 
 def color(color="end"):
+    """
+    """
     colors = {
         "header": "\033[95m",
         "ok_blue": "\033[94m",
@@ -22,6 +24,18 @@ def color(color="end"):
     }
 
     return colors[color]
+
+def patterns(pattern):
+    """
+    """
+    patterns = {
+        "TERRAFORM": r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)',
+        "PROVIDER": r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})',
+        "MODULE_REGISTRY": r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+        "MODULE_GITHUB": r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+    }
+
+    return patterns[pattern]
 
 def get_terraform_files(terraform_folder=None, file_pattern='*.tf'):
     """
@@ -52,7 +66,7 @@ def get_config(config_file=".tfmesh.yaml"):
         config = None
     return config
 
-def get_dependencies(terraform_files, patterns):
+def get_dependency_attributes(terraform_files, patterns):
     """
     """
     dependencies = defaultdict(dict)
@@ -84,6 +98,104 @@ def get_dependencies(terraform_files, patterns):
                         dependencies[target][result[1]] = dependency
 
     return dependencies
+
+def get_dependency_attribute(terraform_files, patterns, resource_type, name, attribute, allowed, exclude_prerelease, top):
+    """
+    """
+    dependencies = get_dependency_attributes(
+        terraform_files=terraform_files,
+        patterns=patterns
+    )
+    if attribute == "versions":
+        available_versions = sort_versions(
+            get_available_versions(
+                target=dependencies[resource_type][name]["target"],
+                source=dependencies[resource_type][name]["source"],
+                exclude_pre_release=exclude_prerelease
+            )
+        )
+        allowed_versions = sort_versions(
+            get_allowed_versions(
+                available_versions,
+                dependencies[resource_type][name]["lower_constraint"],
+                dependencies[resource_type][name]["lower_constraint_operator"],
+                dependencies[resource_type][name]["upper_constraint"],
+                dependencies[resource_type][name]["upper_constraint_operator"],
+            )
+        )
+        if allowed:
+            result = pretty_print(allowed_versions, top=top)
+        else:
+            result = pretty_print(available_versions, top=top)
+    else:
+        result = pretty_print(dependencies[resource_type][name][attribute])
+
+    return result
+
+def set_dependency_attribute(terraform_files, patterns, resource_type, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, force):
+    dependencies = get_dependency_attributes(
+        terraform_files=terraform_files,
+        patterns=patterns
+    )
+    if attribute == "version":
+        available_versions = sort_versions(
+            get_available_versions(
+                target=dependencies[resource_type][name]["target"],
+                source=dependencies[resource_type][name]["source"],
+                exclude_pre_release=exclude_prerelease
+            )
+        )
+        allowed_versions = sort_versions(
+            get_allowed_versions(
+                available_versions,
+                dependencies[resource_type][name]["lower_constraint"],
+                dependencies[resource_type][name]["lower_constraint_operator"],
+                dependencies[resource_type][name]["upper_constraint"],
+                dependencies[resource_type][name]["upper_constraint_operator"],
+            )
+        )
+        if ignore_constraints:
+            versions = available_versions
+        else:
+            versions = allowed_versions
+    else:
+        versions = []
+
+    current_value = dependencies[resource_type][name][attribute]
+    new_value = value
+
+    if current_value == new_value:
+        result = pretty_print(f'The {attribute} is already set to "{new_value}".')
+    elif force or new_value in versions or attribute == "constraint":
+        update_version(
+            filepath=dependencies[resource_type][name]["filepath"],
+            code=dependencies[resource_type][name]["code"],
+            attribute=attribute,
+            value=value
+        )
+        result = pretty_print(f'The {attribute} was changed from "{current_value}" to "{new_value}".')
+    elif versions == []:
+        result = pretty_print(f'There is no version available that meets the constraint "{dependencies[resource_type][name]["constraint"]}".')
+    else:
+        title = f'"{value}" is not an acceptable version.  Select from one of:'
+        result = pretty_print(versions, title=title)
+    
+    return result
+
+def get_resources(terraform_files, patterns):
+    """
+    """
+    resource_list = []
+
+    dependencies = get_dependency_attributes(
+        terraform_files=terraform_files,
+        patterns=patterns
+    )
+    for resource_type, resources in dependencies.items():
+        for resource in resources:
+            resource_list.append(resource)
+
+    return pretty_print(resource_list)
 
 def get_semantic_version(version):
     """
@@ -257,14 +369,29 @@ def sort_versions(versions, reverse=True):
 
     return versions
 
-def print_list(versions, top=None):
+def pretty_print(ugly_list, title=None, top=None, item_prefix=" - "):
     """
     """
-    if top:
-        versions = versions[:top]
+    pretty_print = "\n"
 
-    for version in versions:
-        print(f'- {version}')
+    if isinstance(ugly_list, str):
+        ugly_list = [ugly_list]
+
+    if len(ugly_list) > 1:
+        item_prefix = item_prefix
+    else:
+        item_prefix = ""
+
+    if title:
+        pretty_print += f'{title}\n'
+
+    if top:
+        ugly_list = ugly_list[:top]
+
+    for ugly_item in ugly_list:
+        pretty_print += f'{item_prefix}{ugly_item}\n'
+
+    return pretty_print
 
 def get_latest_version(versions):
     """

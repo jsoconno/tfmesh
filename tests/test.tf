@@ -1,4 +1,4 @@
-# This file is used for running tests of the get_dependencies function.
+# This file is used for running tests of the get_dependency_attributes function.
 
 terraform {
     required_version = "1.1.3"
