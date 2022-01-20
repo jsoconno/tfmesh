@@ -27,15 +27,15 @@ def init(config_file, terraform_folder, terraform_file_pattern, force):
     if config_file.is_file():
         if force:
             set_config(config_file, terraform_folder, terraform_file_pattern)
-            print("The configuration was updated.")
+            click.echo("The configuration was updated.")
         if click.confirm("A configuration file already exists.  Would you like to update it?"):
             set_config(config_file, terraform_folder, terraform_file_pattern)
-            print("The configuration was updated.")
+            click.echo("The configuration was updated.")
         else:
-            print("The configuration was not changed.")
+            click.echo("The configuration was not changed.")
     else:
         set_config(config_file, terraform_folder, terraform_file_pattern)
-        print("The configuration was created.")
+        click.echo("The configuration was created.")
 
 @cli.group("get")
 def get():
@@ -55,7 +55,7 @@ def set():
 @click.argument("attribute", type=click.Choice(["target", "filepath", "filename", "code", "name", "source", "version", "versions", "constraint", "lower_constraint_operator", "lower_constraint", "upper_constraint_operator", "upper_constraint"]))
 @click.option("--allowed", is_flag=True)
 @click.option("--exclude-prerelease", is_flag=True)
-@click.option("--top", type=int, default=5)
+@click.option("--top", type=int, default=None)
 @click.pass_obj
 def terraform(config, attribute, allowed, exclude_prerelease, top):
     """
@@ -73,7 +73,7 @@ def terraform(config, attribute, allowed, exclude_prerelease, top):
         exclude_prerelease=exclude_prerelease,
         top=top
     )
-    print(result)
+    click.echo(result)
 
 @get.command("providers")
 @click.pass_obj
@@ -87,14 +87,14 @@ def providers(config):
             "providers": [patterns("PROVIDER")],
         }
     )
-    print(resources)
+    click.echo(resources)
 
 @get.command("provider")
 @click.argument("name", type=str)
 @click.argument("attribute", type=click.Choice(["target", "filepath", "filename", "code", "name", "source", "version", "versions", "constraint", "lower_constraint_operator", "lower_constraint", "upper_constraint_operator", "upper_constraint"]))
 @click.option("--allowed", is_flag=True)
 @click.option("--exclude-prerelease", is_flag=True)
-@click.option("--top", type=int, default=5)
+@click.option("--top", type=int, default=None)
 @click.pass_obj
 def provider(config, name, attribute, allowed, exclude_prerelease, top):
     """
@@ -112,7 +112,7 @@ def provider(config, name, attribute, allowed, exclude_prerelease, top):
         exclude_prerelease=exclude_prerelease,
         top=top
     )
-    print(result)
+    click.echo(result)
 
 @get.command("modules")
 @click.pass_obj
@@ -129,14 +129,14 @@ def modules(config):
             ],
         }
     )
-    print(resources)
+    click.echo(resources)
 
 @get.command("module")
 @click.argument("name", type=str)
 @click.argument("attribute", type=click.Choice(["target", "filepath", "filename", "code", "name", "source", "version", "versions", "constraint", "lower_constraint_operator", "lower_constraint", "upper_constraint_operator", "upper_constraint"]))
 @click.option("--allowed", is_flag=True)
 @click.option("--exclude-prerelease", is_flag=True)
-@click.option("--top", type=int, default=5)
+@click.option("--top", type=int, default=None)
 @click.pass_obj
 def module(config, name, attribute, allowed, exclude_prerelease, top):
     """
@@ -157,7 +157,7 @@ def module(config, name, attribute, allowed, exclude_prerelease, top):
         exclude_prerelease=exclude_prerelease,
         top=top
     )
-    print(result)
+    click.echo(result)
 
 @set.command("terraform")
 @click.argument("attribute", type=click.Choice(["version", "constraint"]))
@@ -185,7 +185,7 @@ def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_cons
         ignore_constraints=ignore_constraints,
         force=force
     )
-    print(result)
+    click.echo(result)
 
 @set.command("provider")
 @click.argument("name", type=str)
@@ -214,7 +214,7 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
         ignore_constraints=ignore_constraints,
         force=force
     )
-    print(result)
+    click.echo(result)
 
 @set.command("module")
 @click.argument("name", type=str)
@@ -246,7 +246,7 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
         ignore_constraints=ignore_constraints,
         force=force
     )
-    print(result)
+    click.echo(result)
 
 @cli.command("plan")
 @click.option("--target", nargs=2, multiple=True)
@@ -310,13 +310,13 @@ def plan(config, target, exclude_prerelease, ignore_constraints, no_color):
                     else:
                         pass
 
-    print('\n')
+    click.echo('\n')
     if ignore_constraints:
-        print("Ignoring constraints!")
-    print("This was a plan only.  No files were updated.")
+        click.echo("Ignoring constraints!")
+    click.echo("This was a plan only.  No files were updated.")
     table = tabulate(table, headers=table_headers, tablefmt='pretty')
-    print(table)
-    print('\n')
+    click.echo(table)
+    click.echo('\n')
 
 @cli.command("apply")
 @click.option("--target", nargs=2, multiple=True)
@@ -398,12 +398,12 @@ def apply(config, target, exclude_prerelease, ignore_constraints, no_color, auto
                         else:
                             pass
 
-        print('\n')
+        click.echo('\n')
         if ignore_constraints:
-            print("Ignoring constraints!")
-        print("Configuration version were upgraded!")
+            click.echo("Ignoring constraints!")
+        click.echo("Configuration version were upgraded!")
         table = tabulate(table, headers=table_headers, tablefmt='pretty')
-        print(table)
-        print('\n')
+        click.echo(table)
+        click.echo('\n')
     else:
-        print("No changes were made.")
+        click.echo("No changes were made.")
