@@ -269,6 +269,7 @@ def plan(config, target, exclude_prerelease, ignore_constraints, no_color, verbo
                 patterns("MODULE_GITHUB")
             ]
         },
+        target=target,
         verbose=verbose,
         exclude_prerelease=exclude_prerelease,
         ignore_constraints=ignore_constraints,
@@ -298,6 +299,7 @@ def apply(config, target, exclude_prerelease, ignore_constraints, no_color, verb
             ]
         },
         apply=True,
+        target=target,
         verbose=verbose,
         exclude_prerelease=exclude_prerelease,
         ignore_constraints=ignore_constraints,
