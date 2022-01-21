@@ -224,6 +224,24 @@ Example:
 tfmesh apply
 ```
 
+# Version status
+
+Resource actions and version statuses are indicated with the following symbols in plan and apply:
+
+Actions:
+* `+`: upgraded - the version will be or was upgraded.
+* `-`: downgraded - the version will be or was downgraded.
+* `~`: no change - the version was unchanged.
+
+Version status:
+* `*`: latest available version - the version will be or is the latest available.
+* `.`: latest allowed version - the version will be or is the latest allowed version.
+* `x`: no suitable version - there was no suitable version based on constraints.
+* `!`: bug - you found a bug (please report on GitHub).
+
+Actions and and versions are used together separated by a forward slash (/) to indicate changes.
+For example, `+/*` would indicate the version will be upgraded to the latest version
+
 # Example output
 
 ```
@@ -261,21 +279,3 @@ terraform {
 
 Plan: 1 to upgrade, 1 to downgrade
 ```
-
-# Version status
-
-Resource actions and version statuses are indicated with the following symbols in plan and apply:
-
-Actions:
-* `+`: upgraded - the version will be or was upgraded.
-* `-`: downgraded - the version will be or was downgraded.
-* `~`: no change - the version was unchanged.
-
-Version status:
-* `*`: latest available version - the version will be or is the latest available.
-* `.`: latest allowed version - the version will be or is the latest allowed version.
-* `x`: no suitable version - there was no suitable version based on constraints.
-* `!`: bug - you found a bug (please report on GitHub).
-
-Actions and and versions are used together separated by a forward slash (/) to indicate changes.
-For example, '+/*' would indicate the version will be upgraded to the latest version
