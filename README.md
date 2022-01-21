@@ -170,8 +170,8 @@ The `set` command allows you to update your configurations resource versions and
 
 The following attributes are supported:
 
-* `version` - returns the version.
-* `constraint` - returns the full version constraint.
+* `version` - sets the version.
+* `constraint` - sets the full version constraint.
 
 The following options are supported:
 
@@ -197,6 +197,7 @@ The following options are supported:
 * `--exclude-prerelease` - ensures the set version is not a pre-release.
 * `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
 * `--no-color` - removes terminal color formatting.
+* `--verbose` - returns all resources as part of the plan including those with no version changes.
 
 Example:
 ```cmd
@@ -215,6 +216,7 @@ The following options are supported:
 * `--exclude-prerelease` - ensures the set version is not a pre-release.
 * `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
 * `--no-color` - removes terminal color formatting.
+* `--verbose` - returns all resources as part of the apply including those with no version changes.
 * `--auto-approve` - approves upgrades without prompting for user input.
 
 Example:
@@ -225,35 +227,55 @@ tfmesh apply
 # Example output
 
 ```
-+-----------+-------------+--------------+--------------+-----------------+--------------+-------------------------+
-| resource  |   module    |   current    |    latest    |   constraint    |    latest    |         status          |
-|   type    |    name     |   version    |  available   |                 |   allowed    |                         |
-+-----------+-------------+--------------+--------------+-----------------+--------------+-------------------------+
-|  modules  |   consul    |    0.5.0     |    0.11.0    |     ~>0.5.0     |    0.5.0     | (.) pinned out-of-date  |
-|  modules  | conventions | 6.0.0-pre001 | 6.0.0-pre001 |      ~>6.0      | 6.0.0-pre001 |     (*) up-to-date      |
-|  modules  | api_gateway |    v1.0.2    |    v1.0.2    |                 |    v1.0.2    |     (*) up-to-date      |
-|  modules  |   lambda    |    v1.1.2    |    v1.1.2    |      ~>1.1      |    v1.1.2    |     (*) up-to-date      |
-|  modules  |     s3      |    v1.1.0    |    v1.1.0    | >=1.0.0, <2.0.0 |    v1.1.0    |     (*) up-to-date      |
-| terraform |  terraform  |    1.1.3     |    1.1.3     |     >=1.0.0     |    1.1.3     |     (*) up-to-date      |
-| providers |     aws     |    3.72.0    |    3.72.0    |     ~>3.70      |    3.72.0    |     (*) up-to-date      |
-| providers |   azurerm   |    1.9.0     |    2.92.0    | >=3.0.0, <2.0.0 |              | (x) no suitable version |
-+-----------+-------------+--------------+--------------+-----------------+--------------+-------------------------+
+Resource actions and version statuses are indicated with the following symbols:
+
+
+Actions:
++: upgraded
+-: downgraded
+~: no change
+
+
+Version status:
+*: latest available version
+.: latest allowed version based on constraints
+x: no suitable version
+!: bug
+
+
+Actions and and versions are used together separated by a forward slash (/) to indicate changes.
+For example, '+/*' would indicate the version will be upgraded to the latest version
+
+
+Terraform Mesh will perform the following actions:
+
+terraform {
+-/. required_version = "1.1.4" # =1.0.0 // downgrade to latest allowed = 1.0.0
+
+
+        aws = {
+            source = "hashicorp/aws"
+        +/* version = "3.72.0" # ~>3.0 // upgrade to latest available = 3.73.0
+        }
+
+
+Plan: 1 to upgrade, 1 to downgrade
 ```
 
 # Version status
 
-Terraform Mesh will evaluate versions in your configuration to determine the current version, latest available version, and latest allowed version.
+Resource actions and version statuses are indicated with the following symbols in plan and apply:
 
-* `current version` - The current version set in the configuration.
-* `latest available` - The latest available version available for Terraform or a given provider or module.
-* `latest allowed` - The latest version that is allowed based on constraints in the configuration.
+Actions:
+* `+`: upgraded - the version will be or was upgraded.
+* `-`: downgraded - the version will be or was downgraded.
+* `~`: no change - the version was unchanged.
 
-The supported status are:
+Version status:
+* `*`: latest available version - the version will be or is the latest available.
+* `.`: latest allowed version - the version will be or is the latest allowed version.
+* `x`: no suitable version - there was no suitable version based on constraints.
+* `!`: bug - you found a bug (please report on GitHub).
 
-* `(*) up-to-date` - The `current version` matches the `latest available version`.
-* `(->) upgraded to latest` - The `current version` was upgraded to the `latest available version`.
-* `(>)upgraded to allowed` - The `current version` was upgraded to the `latest allowed version` and is behind.
-* `(<-) downgraded to latest` - The `current version` was downgraded to the `latest available version`.
-* `(<) downgraded to allowed` - The `current version` was downgraded to the `latest allowed version` and is behind.
-* `(.) pinned out-of-date` - The `current version` is pinned and is behind.
-* `(x) no suitable version` - The was no available version that met the provided constraints.
+Actions and and versions are used together separated by a forward slash (/) to indicate changes.
+For example, '+/*' would indicate the version will be upgraded to the latest version
