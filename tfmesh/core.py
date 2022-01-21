@@ -544,12 +544,25 @@ def prefix_status(status, string, color=None, no_color=False):
 
     return line
 
-def run_plan_apply(terraform_files, patterns, apply=False, verbose=False, exclude_prerelease=False, ignore_constraints=False, no_color=False):
+def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=False, exclude_prerelease=False, ignore_constraints=False, no_color=False):
     """
     
     """
     # get resource attributes
     resources = get_dependency_attributes(terraform_files, patterns)
+
+    # limit resources to targets if there are targets
+    if target:
+        tmp_resources = defaultdict(dict)
+        for resource in target:
+            print(f'resource: {resource}')
+            resource_type = resource[0]
+            resource_name = resource[1]
+
+            tmp_resources[resource_type][resource_name] = resources[resource_type][resource_name]
+        resources = tmp_resources
+    else:
+        pass
 
     # print the header text
     print(f'{"" if no_color else get_color("ok_green")}')
