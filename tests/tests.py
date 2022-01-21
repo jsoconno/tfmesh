@@ -180,7 +180,7 @@ class TestCore(unittest.TestCase):
 
         status = get_status(current_version, latest_available_version, latest_allowed_version)
 
-        self.assertIn("(*) up-to-date", status)
+        self.assertEqual("~/*", status["symbol"])
 
     def test_get_status_upgraded_to_latest(self):
         """
@@ -192,7 +192,7 @@ class TestCore(unittest.TestCase):
 
         status = get_status(current_version, latest_available_version, latest_allowed_version)
 
-        self.assertIn("(->) upgraded to latest", status)
+        self.assertEqual("+/*", status["symbol"])
 
     def test_get_status_upgraded_to_allowed(self):
         """
@@ -204,7 +204,7 @@ class TestCore(unittest.TestCase):
 
         status = get_status(current_version, latest_available_version, latest_allowed_version)
 
-        self.assertIn("(>) upgraded to allowed", status)
+        self.assertEqual("+/.", status["symbol"])
 
     def test_get_status_downgraded_to_latest(self):
         """
@@ -216,7 +216,7 @@ class TestCore(unittest.TestCase):
 
         status = get_status(current_version, latest_available_version, latest_allowed_version)
 
-        self.assertIn("(<-) downgraded to latest", status)
+        self.assertEqual("-/*", status["symbol"])
 
     def test_get_status_downgraded_to_allowed(self):
         """
@@ -228,7 +228,7 @@ class TestCore(unittest.TestCase):
 
         status = get_status(current_version, latest_available_version, latest_allowed_version)
 
-        self.assertIn("(<) downgraded to allowed", status)
+        self.assertEqual("-/.", status["symbol"])
 
     def test_get_status_pinned(self):
         """
@@ -240,7 +240,7 @@ class TestCore(unittest.TestCase):
 
         status = get_status(current_version, latest_available_version, latest_allowed_version)
 
-        self.assertIn("(.) pinned out-of-date", status)
+        self.assertEqual("~/.", status["symbol"])
 
     def test_get_status_no_suitable_version(self):
         """
@@ -252,7 +252,7 @@ class TestCore(unittest.TestCase):
 
         status = get_status(current_version, latest_available_version, latest_allowed_version)
 
-        self.assertIn("(x) no suitable version", status)
+        self.assertEqual("~/x", status["symbol"])
 
     def test_sort_versions(self):
         """

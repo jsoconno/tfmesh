@@ -490,20 +490,20 @@ def get_status(current_version, latest_available_version, latest_allowed_version
             "status": "latest allowed",
             "color": "warning"
         }
-    # current < available and current > allowed
-    elif compare_versions(current_version, ">=", latest_available_version) and compare_versions(current_version, ">", latest_allowed_version):
-        status = {
-            "symbol": "-/.",
-            "action": "downgrade",
-            "status": "latest allowed",
-            "color": "warning"
-        }
     # current > available and available = allowed
     elif compare_versions(current_version, ">", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
         status = {
             "symbol": "-/*",
             "action": "downgrade",
             "status": "latest available",
+            "color": "warning"
+        }
+    # current < available and current > allowed
+    elif compare_versions(current_version, ">=", latest_available_version) and compare_versions(current_version, ">", latest_allowed_version):
+        status = {
+            "symbol": "-/.",
+            "action": "downgrade",
+            "status": "latest allowed",
             "color": "warning"
         }
     # current > available and current > allowed
