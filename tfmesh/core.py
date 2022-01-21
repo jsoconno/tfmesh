@@ -8,7 +8,7 @@ import yaml
 from tabulate import tabulate
 from collections import defaultdict
 
-def color(color="end"):
+def get_color(color="end"):
     """
     """
     colors = {
@@ -436,29 +436,228 @@ def update_version(filepath, code, attribute, value):
     with open(filepath, 'w') as f:
         f.write(data)
 
-def get_status(current_version, latest_available_version, latest_allowed_version, no_color=False):
+def get_status(current_version, latest_available_version, latest_allowed_version):
     """
     Takes version details and outputs the status as a string.
+
+    ~ no change
+    + upgraded
+    - downgraded
+
+    * latest available
+    . latest allowed
+    x no suitable version
+    ! bug
     """
     current_version = get_semantic_version(current_version)
     latest_available_version = get_semantic_version(latest_available_version)
     latest_allowed_version = get_semantic_version(latest_allowed_version)
 
     if latest_allowed_version == None:
-        status = f"{'' if no_color else color('fail')}(x) no suitable version{'' if no_color else color()}"
+        status = {
+            "symbol": "~/x",
+            "action": "no change",
+            "status": "no suitable version",
+            "color": "fail"
+        }
     elif compare_versions(current_version, "=", latest_available_version) and compare_versions(current_version, "=", latest_allowed_version):
-        status = f"{'' if no_color else color('ok_green')}(*) up-to-date{'' if no_color else color()}"
+        status = {
+            "symbol": "~/*",
+            "action": "no change",
+            "status": "latest available",
+            "color": "ok_green"
+        }
     elif compare_versions(current_version, "!=", latest_available_version) and compare_versions(current_version, "=", latest_allowed_version):
-        status = f"{'' if no_color else color('warning')}(.) pinned out-of-date{'' if no_color else color()}"
+        status = {
+            "symbol": "~/.",
+            "action": "no change",
+            "status": "latest allowed",
+            "color": "warning"
+        }
+    # current < available and available = allowed
     elif compare_versions(current_version, "<", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
-        status = f"{'' if no_color else color('ok_green')}(->) upgraded to latest{'' if no_color else color()}"
-    elif compare_versions(current_version, "<", latest_available_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
-        status = f"{'' if no_color else color('warning')}(>) upgraded to allowed{'' if no_color else color()}"
+        status = {
+            "symbol": "+/*",
+            "action": "upgrade",
+            "status": "latest available",
+            "color": "ok_green"
+        }
+    # current < available and current < allowed
+    elif compare_versions(current_version, "<", latest_available_version) and compare_versions(current_version, "<", latest_allowed_version):
+        status = {
+            "symbol": "+/.",
+            "action": "upgrade",
+            "status": "latest allowed",
+            "color": "warning"
+        }
+    # current > available and available = allowed
     elif compare_versions(current_version, ">", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
-        status = f"{'' if no_color else color('ok_green')}(<-) downgraded to latest{'' if no_color else color()}"
-    elif compare_versions(current_version, ">", latest_allowed_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
-        status = f"{'' if no_color else color('warning')}(<) downgraded to allowed{'' if no_color else color()}"
+        status = {
+            "symbol": "-/*",
+            "action": "downgrade",
+            "status": "latest available",
+            "color": "warning"
+        }
+    # current < available and current > allowed
+    elif compare_versions(current_version, ">=", latest_available_version) and compare_versions(current_version, ">", latest_allowed_version):
+        status = {
+            "symbol": "-/.",
+            "action": "downgrade",
+            "status": "latest allowed",
+            "color": "warning"
+        }
+    # current > available and current > allowed
+    elif compare_versions(current_version, ">", latest_available_version) and compare_versions(current_version, ">", latest_allowed_version):
+        status = {
+            "symbol": "-/.",
+            "action": "downgrade",
+            "status": "latest allowed",
+            "color": "warning"
+        }
     else:
-        status = f"{'' if no_color else color('fail')}(!) you found a bug{'' if no_color else color()}"
+        status = {
+            "symbol": "~/!",
+            "action": "no change",
+            "status": "bug",
+            "color": "fail"
+        }
 
     return status
+
+def prefix_status(status, string, color=None, no_color=False):
+    index = 0
+    for char in string:
+        if re.match(r'[\S]', char):
+            break
+        else:
+            index += 1
+
+    status_length = len(status) + 1
+
+    if index < status_length:
+        string = " " * (status_length - index) + string
+        index = status_length
+
+    position = index - 2
+    line = f'{string[:position]}{"" if no_color else get_color(color)}{status}{"" if no_color else get_color()}{string[position+1:]}'
+    line = line[len(status) - 1:]
+
+    return line
+
+def run_plan_apply(terraform_files, patterns, apply=False, verbose=False, exclude_prerelease=False, ignore_constraints=False, no_color=False):
+    """
+    
+    """
+    # get resource attributes
+    resources = get_dependency_attributes(terraform_files, patterns)
+
+    # print the header text
+    print(f'{"" if no_color else get_color("ok_green")}')
+    print("Resource actions and version statuses are indicated with the following symbols:")
+    print('\n')
+    print("Actions:")
+    print("+: upgraded")
+    print("-: downgraded")
+    print("~: no change")
+    print('\n')
+    print("Version status:")
+    print("*: latest available version")
+    print(".: latest allowed version based on constraints")
+    print("x: no suitable version")
+    print("!: bug")
+    print('\n')
+    print("Actions and and versions are used together separated by a forward slash (/) to indicate changes.")
+    print("For example, '+/*' would indicate the version will be upgraded to the latest version")
+    print('\n')
+    print("Terraform Mesh will perform the following actions:")
+    print(f'{"" if no_color else get_color()}')
+
+    # create map for tracking changes
+    plan = {
+        "upgrade": 0,
+        "downgrade": 0,
+        "no change": 0
+    }
+
+    # iterate through resources to get available and allowed versions
+    for resource_type, resources in resources.items():
+        for resource, attributes in resources.items():
+            available_versions = get_available_versions(
+                target=attributes["target"],
+                source=attributes["source"],
+                exclude_pre_release=exclude_prerelease
+            )
+            allowed_versions = get_allowed_versions(
+                available_versions,
+                attributes["lower_constraint"],
+                attributes["lower_constraint_operator"],
+                attributes["upper_constraint"],
+                attributes["upper_constraint_operator"],
+            )
+
+            # get the latest versions
+            current_version = attributes["version"]
+            latest_available_version = get_latest_version(available_versions)
+            if ignore_constraints:
+                latest_allowed_version = latest_available_version
+            else:
+                latest_allowed_version = get_latest_version(allowed_versions)
+
+            # get the status
+            status = get_status(current_version, latest_available_version, latest_allowed_version)
+
+            # account for lost spaces in regex for providers (need more dynamic fix)
+            if attributes["target"] == "providers":
+                code = "        " + attributes["code"]
+            else:
+                code = attributes["code"]
+
+            # split code on newlines so it can be output line by line
+            code = code.split('\n')
+
+            # do some stuff is the current version is not the same as the allowed version
+            if compare_versions(get_semantic_version(current_version), "!=", get_semantic_version(latest_allowed_version)):
+                plan[status["action"]] += 1
+
+                # iterate through code
+                for line in code:
+                    if current_version in line:
+                        print(f'{prefix_status(status["symbol"], line, status["color"], no_color)}{"" if no_color else get_color(status["color"])} // {status["action"]}{"d" if apply else ""} to {status["status"]} = {latest_allowed_version}{"" if no_color else get_color()}')
+                    else:
+                        print(line)
+
+                print("\n")
+                # print("...")
+                # print("\n")
+
+                if apply:
+                    update_version(
+                        filepath=attributes["filepath"],
+                        code=attributes["code"],
+                        attribute="version",
+                        value=latest_allowed_version
+                    )
+                else:
+                    pass
+            else:
+                if verbose:
+                    plan["no change"] += 1
+                    # iterate through code
+                    for line in code:
+                        if current_version in line:
+                            print(f'{prefix_status(status["symbol"], line, status["color"])}{"" if no_color else get_color(status["color"])} // {status["action"]}{"" if no_color else get_color()}')
+                        else:
+                            print(line)
+
+                    print("\n")
+
+    if apply:
+        print(f'{"" if no_color else get_color("ok_green")}Apply complete!  Resources: {plan["upgrade"]} upgraded, {plan["downgrade"]} downgraded{"" if no_color else get_color()}')
+    elif plan["no change"] > 0:
+        print(f'{"" if no_color else get_color("ok_green")}Plan: {plan["upgrade"]} to upgrade (+), {plan["downgrade"]} to downgrade (-), {plan["no change"]} not to change (~){"" if no_color else get_color()}')
+    elif plan["upgrade"] > 0 or plan["downgrade"] > 0:
+        print(f'{"" if no_color else get_color("ok_green")}Plan: {plan["upgrade"]} to upgrade, {plan["downgrade"]} to downgrade{"" if no_color else get_color()}')
+    else:
+        print(f'{"" if no_color else get_color("ok_green")}No changes.  Dependency versions are up-to-date.{"" if no_color else get_color()}')
+
+    return None
