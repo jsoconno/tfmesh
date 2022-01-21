@@ -167,8 +167,8 @@ class TestCore(unittest.TestCase):
         self.assertIn("0.12.0-alpha3", result_with_pre_releases)
         self.assertNotIn("0.12.0-alpha3", result_without_pre_releases)
 
-    def test_color(self):
-        self.assertEqual(color("ok_blue"), "\033[94m")
+    def test_get_color(self):
+        self.assertEqual(get_color("ok_blue"), "\033[94m")
 
     def test_get_status_up_to_date(self):
         """

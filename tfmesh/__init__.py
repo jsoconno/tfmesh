@@ -253,157 +253,131 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--ignore-constraints", is_flag=True)
 @click.option("--no-color", is_flag=True)
+@click.option("--verbose", is_flag=True)
 @click.pass_obj
-def plan(config, target, exclude_prerelease, ignore_constraints, no_color):
+def plan(config, target, exclude_prerelease, ignore_constraints, no_color, verbose):
     """
     Plans what version changes will be made to the configuration.
     """
-    table_headers = ["resource\ntype", "module\nname", "current\nversion", "latest\navailable", "constraint", "latest\nallowed", "status"]
-    table = []
-    dependencies = get_dependency_attributes(
+    run_plan_apply(
         terraform_files=config["terraform_files"],
         patterns = {
-            "terraform": [patterns("TERRAFORM")],
-            "providers": [patterns("PROVIDER")],
+            "terraform": [r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)'],
+            "providers": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
             "modules": [
-                patterns("MODULE_REGISTRY"),
-                patterns("MODULE_GITHUB")
+                r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+                r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})'
             ]
-        }
+        },
+        verbose=verbose,
+        exclude_prerelease=exclude_prerelease,
+        ignore_constraints=ignore_constraints,
+        no_color=no_color
     )
-    for resource_type, resource in dependencies.items():
-        for name, attributes in resource.items():
-            available_versions = sort_versions(
-                get_available_versions(
-                    target=attributes["target"],
-                    source=attributes["source"],
-                    exclude_pre_release=exclude_prerelease
-                )
-            )
-            allowed_versions = get_allowed_versions(
-                available_versions,
-                attributes["lower_constraint"],
-                attributes["lower_constraint_operator"],
-                attributes["upper_constraint"],
-                attributes["upper_constraint_operator"],
-            )
-            if ignore_constraints:
-                versions = available_versions
-            else:
-                versions = allowed_versions
-
-            # Versions
-            current_version = attributes["version"]
-            latest_available_version = get_latest_version(available_versions)
-            latest_allowed_version = get_latest_version(versions)
-
-            status = get_status(current_version, latest_available_version, latest_allowed_version, no_color=no_color)
-
-            if not target:
-                table.append([attributes["target"], attributes["name"], current_version, latest_available_version, attributes["constraint"], latest_allowed_version, status])
-            else:
-                for resource in target:
-                    resource_type = resource[0]
-                    resource_name = resource[1]
-                    if resource_type in attributes["target"] and resource_name == attributes["name"]:
-                        table.append([attributes["target"], attributes["name"], current_version, latest_available_version, attributes["constraint"], latest_allowed_version, status])
-                    else:
-                        pass
-
-    click.echo('\n')
-    if ignore_constraints:
-        click.echo("Ignoring constraints!")
-    click.echo("This was a plan only.  No files were updated.")
-    table = tabulate(table, headers=table_headers, tablefmt='pretty')
-    click.echo(table)
-    click.echo('\n')
 
 @cli.command("apply")
 @click.option("--target", nargs=2, multiple=True)
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--ignore-constraints", is_flag=True)
 @click.option("--no-color", is_flag=True)
+@click.option("--verbose", is_flag=True)
 @click.option("--auto-approve", is_flag=True)
 @click.pass_obj
-def apply(config, target, exclude_prerelease, ignore_constraints, no_color, auto_approve):
+def apply(config, target, exclude_prerelease, ignore_constraints, no_color, verbose, auto_approve):
     """
     Applies configuration version changes.
     """
-    table_headers = ["resource\ntype", "module\nname", "current\nversion", "latest\navailable", "constraint", "latest\nallowed", "status"]
-    table = []
-    dependencies = get_dependency_attributes(
+    run_plan_apply(
         terraform_files=config["terraform_files"],
         patterns = {
-            "terraform": [patterns("TERRAFORM")],
-            "providers": [patterns("PROVIDER")],
+            "terraform": [r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)'],
+            "providers": [r'(([a-zA-Z\S]*) *= *{[^}]*?[\s]*source *= *\"(.*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?})'],
             "modules": [
-                patterns("MODULE_REGISTRY"),
-                patterns("MODULE_GITHUB")
+                r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\"[\s]*version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})',
+                r'(module *\"(.*)\" *{[^}]*?source *= *\"(\S*)\?ref=([a-zA-Z]*\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?^})'
             ]
-        }
+        },
+        apply=True,
+        verbose=verbose,
+        exclude_prerelease=exclude_prerelease,
+        ignore_constraints=ignore_constraints,
+        no_color=no_color
     )
-    if click.confirm("You are about to make changes to your configrations versions.  Would you like to proceed?"):
-        for resource_type, resource in dependencies.items():
-            for name, attributes in resource.items():
-                available_versions = sort_versions(
-                    get_available_versions(
-                        target=attributes["target"],
-                        source=attributes["source"],
-                        exclude_pre_release=exclude_prerelease
-                    )
-                )
-                allowed_versions = get_allowed_versions(
-                    available_versions,
-                    attributes["lower_constraint"],
-                    attributes["lower_constraint_operator"],
-                    attributes["upper_constraint"],
-                    attributes["upper_constraint_operator"],
-                )
-                if ignore_constraints:
-                    versions = available_versions
-                else:
-                    versions = allowed_versions
+    # table_headers = ["resource\ntype", "module\nname", "current\nversion", "latest\navailable", "constraint", "latest\nallowed", "status"]
+    # table = []
+    # dependencies = get_dependency_attributes(
+    #     terraform_files=config["terraform_files"],
+    #     patterns = {
+    #         "terraform": [patterns("TERRAFORM")],
+    #         "providers": [patterns("PROVIDER")],
+    #         "modules": [
+    #             patterns("MODULE_REGISTRY"),
+    #             patterns("MODULE_GITHUB")
+    #         ]
+    #     }
+    # )
+    # if click.confirm("You are about to make changes to your configrations versions.  Would you like to proceed?"):
+    #     for resource_type, resource in dependencies.items():
+    #         for name, attributes in resource.items():
+    #             available_versions = sort_versions(
+    #                 get_available_versions(
+    #                     target=attributes["target"],
+    #                     source=attributes["source"],
+    #                     exclude_pre_release=exclude_prerelease
+    #                 )
+    #             )
+    #             allowed_versions = get_allowed_versions(
+    #                 available_versions,
+    #                 attributes["lower_constraint"],
+    #                 attributes["lower_constraint_operator"],
+    #                 attributes["upper_constraint"],
+    #                 attributes["upper_constraint_operator"],
+    #             )
+    #             if ignore_constraints:
+    #                 versions = available_versions
+    #             else:
+    #                 versions = allowed_versions
 
-                # Versions
-                current_version = attributes["version"]
-                latest_available_version = get_latest_version(available_versions)
-                latest_allowed_version = get_latest_version(versions)
+    #             # Versions
+    #             current_version = attributes["version"]
+    #             latest_available_version = get_latest_version(available_versions)
+    #             latest_allowed_version = get_latest_version(versions)
 
-                status = get_status(current_version, latest_available_version, latest_allowed_version, no_color=no_color)
+    #             status = get_status(current_version, latest_available_version, latest_allowed_version, no_color=no_color)
                 
-                if not target:
-                    if compare_versions(get_semantic_version(current_version), "!=", get_semantic_version(latest_allowed_version)):
-                        update_version(
-                            filepath=attributes["filepath"],
-                            code=attributes["code"],
-                            attribute="version",
-                            value=latest_allowed_version
-                        )
+    #             if not target:
+    #                 if compare_versions(get_semantic_version(current_version), "!=", get_semantic_version(latest_allowed_version)):
+    #                     update_version(
+    #                         filepath=attributes["filepath"],
+    #                         code=attributes["code"],
+    #                         attribute="version",
+    #                         value=latest_allowed_version
+    #                     )
                         
-                    table.append([attributes["target"], attributes["name"], current_version, latest_available_version, attributes["constraint"], latest_allowed_version, status])
-                else:
-                    for resource in target:
-                        resource_type = resource[0]
-                        resource_name = resource[1]
-                        if resource_type in attributes["target"] and resource_name == attributes["name"]:
-                            if compare_versions(get_semantic_version(current_version), "!=", get_semantic_version(latest_allowed_version)):
-                                update_version(
-                                    filepath=attributes["filepath"],
-                                    code=attributes["code"],
-                                    attribute="version",
-                                    value=latest_allowed_version
-                                )
+    #                 table.append([attributes["target"], attributes["name"], current_version, latest_available_version, attributes["constraint"], latest_allowed_version, status])
+    #             else:
+    #                 for resource in target:
+    #                     resource_type = resource[0]
+    #                     resource_name = resource[1]
+    #                     if resource_type in attributes["target"] and resource_name == attributes["name"]:
+    #                         if compare_versions(get_semantic_version(current_version), "!=", get_semantic_version(latest_allowed_version)):
+    #                             update_version(
+    #                                 filepath=attributes["filepath"],
+    #                                 code=attributes["code"],
+    #                                 attribute="version",
+    #                                 value=latest_allowed_version
+    #                             )
                     
-                            table.append([attributes["target"], attributes["name"], current_version, latest_available_version, attributes["constraint"], latest_allowed_version, status])
-                        else:
-                            pass
+    #                         table.append([attributes["target"], attributes["name"], current_version, latest_available_version, attributes["constraint"], latest_allowed_version, status])
+    #                     else:
+    #                         pass
 
-        click.echo('\n')
-        if ignore_constraints:
-            click.echo("Ignoring constraints!")
-        click.echo("Configuration version were upgraded!")
-        table = tabulate(table, headers=table_headers, tablefmt='pretty')
-        click.echo(table)
-        click.echo('\n')
-    else:
-        click.echo("No changes were made.")
+    #     click.echo('\n')
+    #     if ignore_constraints:
+    #         click.echo("Ignoring constraints!")
+    #     click.echo("Configuration version were upgraded!")
+    #     table = tabulate(table, headers=table_headers, tablefmt='pretty')
+    #     click.echo(table)
+    #     click.echo('\n')
+    # else:
+    #     click.echo("No changes were made.")
