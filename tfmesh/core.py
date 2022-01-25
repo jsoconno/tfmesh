@@ -84,7 +84,7 @@ def get_dependency_attributes(terraform_files, patterns):
                             "target": target,
                             "filepath": terraform_file, 
                             "filename": Path(terraform_file).name,
-                            "code": pretty_code(result[0]),
+                            "code": result[0],
                             "name": result[1],
                             "source": result[2],
                             "version": result[3],
@@ -128,7 +128,10 @@ def get_dependency_attribute(terraform_files, patterns, resource_type, name, att
         else:
             result = pretty_print(available_versions, top=top)
     else:
-        result = pretty_print(dependencies[resource_type][name][attribute])
+        if attribute == "code":
+            result = pretty_print(pretty_code(dependencies[resource_type][name][attribute]))
+        else:
+            result = pretty_print(dependencies[resource_type][name][attribute])
 
     return result
 
@@ -619,7 +622,7 @@ def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=Fa
             # get the status
             status = get_status(current_version, latest_available_version, latest_allowed_version)
 
-            code = attributes["code"]
+            code = pretty_code(attributes["code"])
 
             # split code on newlines so it can be output line by line
             code = code.split('\n')
