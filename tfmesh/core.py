@@ -84,7 +84,7 @@ def get_dependency_attributes(terraform_files, patterns):
                             "target": target,
                             "filepath": terraform_file, 
                             "filename": Path(terraform_file).name,
-                            "code": result[0],
+                            "code": pretty_code(result[0]),
                             "name": result[1],
                             "source": result[2],
                             "version": result[3],
@@ -619,11 +619,7 @@ def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=Fa
             # get the status
             status = get_status(current_version, latest_available_version, latest_allowed_version)
 
-            # account for lost spaces in regex for providers (need more dynamic fix)
-            if attributes["target"] == "providers":
-                code = "        " + attributes["code"]
-            else:
-                code = attributes["code"]
+            code = attributes["code"]
 
             # split code on newlines so it can be output line by line
             code = code.split('\n')
@@ -674,3 +670,43 @@ def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=Fa
         print(f'{"" if no_color else get_color("ok_green")}No changes.  Dependency versions are up-to-date.{"" if no_color else get_color()}')
 
     return None
+
+def pretty_code(code, spaces=4, indent_symbols = ("{", "[", "("), outdent_symbols = ("}", "]", ")")):
+    """
+    Return nicely formated nested code.
+    """
+    # initialize variables
+    indent = 0
+    new_code = []
+
+    # get each line of code separately
+    code = code.split('\n')
+
+    # loop through each line of code
+    for line in code:
+
+        # keep track of the last indent for a comparision to the current indent later
+        last_indent = indent
+        
+        # add indents based on indent_symbols
+        for symbol in indent_symbols:
+            indent += line.count(symbol)*spaces
+
+        # remove indents based on outdent_symbols
+        for symbol in outdent_symbols:
+            indent -= line.count(symbol)*spaces
+
+        # compare the current indent to the last indent
+        # and determine the appropriate indent level
+        if indent > last_indent:
+            current_indent = last_indent
+        else:
+            current_indent = indent
+
+        # use regex to create the newly formatted line
+        pattern = r'^ +(.*)'
+        line_of_code = re.sub(pattern, fr'{" "*current_indent}\1', line)
+
+        new_code.append(line_of_code)
+
+    return "\n".join(new_code)
