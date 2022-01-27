@@ -730,11 +730,11 @@ def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=Fa
         print(f'{"" if no_color else get_color("ok_green")}No changes.  Dependency versions are up-to-date.{"" if no_color else get_color()}')
 
     if failures >= 1:
-        print(f'\n{get_color("fail")}Warning: {failures} resource(s) failed to return a list of available versions.{get_color()}')
+        print(f'\n{"" if no_color else get_color("fail")}Warning: {failures} resource(s) failed to return a list of available versions.{"" if no_color else get_color()}')
         if apply:
-            print(f'{get_color("fail")}These resources were not modified during apply.{get_color()}')
+            print(f'{"" if no_color else get_color("fail")}These resources were not modified during apply.{"" if no_color else get_color()}')
         if not verbose:
-            print(f'{get_color("fail")}For more details, run the command again with the "--verbose" flag.{get_color()}')
+            print(f'{"" if no_color else get_color("fail")}For more details, run the command again with the "--verbose" flag.{"" if no_color else get_color()}')
 
     return None
 
