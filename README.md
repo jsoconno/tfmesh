@@ -276,10 +276,10 @@ terraform {
 -/. required_version = "1.1.4" # =1.0.0 // downgrade to latest allowed = 1.0.0
 
 
-        aws = {
-            source = "hashicorp/aws"
-        +/* version = "3.72.0" # ~>3.0 // upgrade to latest available = 3.73.0
-        }
+aws = {
+    source = "hashicorp/aws"
++/* version = "3.72.0" # ~>3.0 // upgrade to latest available = 3.73.0
+}
 
 
 Plan: 1 to upgrade, 1 to downgrade
