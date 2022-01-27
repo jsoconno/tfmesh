@@ -789,6 +789,7 @@ def set_environment_variables(var, config_file=".tfmesh.yaml"):
     command_line_variables = {}
     for v in var:
         name, value = re.findall(r'(\S*) *= *(\S*)', v)[0]
+        name = name.replace("-", "_")
         name = re.sub(r'[^a-zA-Z0-9_]', "", name)
         command_line_variables[name] = value
 

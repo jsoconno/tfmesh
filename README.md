@@ -286,11 +286,16 @@ Plan: 1 to upgrade, 1 to downgrade
 ```
 # Setting variables
 
-There are three ways to add a variable to Terraform Mesh.  The following list provides the options in order of highest to lowest precedence:
+Variables allow users to pass data to Terraform Mesh, primarily for authenticating with private repositories.  If the same variable is assigned multiple values, Terraform Mesh uses the last value it finds, overriding any previous values.
+
+Terraform Mesh supports three methods for setting variables:
+Terraform Mesh loads variables in the following order, with later sources taking precedence over earlier ones:
 
 * **The command line** - variables can be passed on the command line for all commands using the `--var` flag.  All variables must be in the format `--var="name=value"`.  With this method, variables need to be passed every time they are required for a command.
 * **The configuration file** - variables can also be saved in the configuration file using the same `--var` syntax above.  This allows variables to be persistent across all commands making things simpler when working locally.  Be warned that secret values will be in plain text in the configuration file.  It is recommended to make sure to add this file to `.gitignore`.
 * **The terminal** - any variable can be set in the terminal as an environment variable.  Simple append `TFMESH_` to any variable you want to be able to reference in your session.  For example `export TFMESH_GITHUB_PAT=somethingprivate`.
+
+Terraform Mesh will always load all variable sources in with earlier sources taking precedence over later ones:
 
 # Handling errors
 
