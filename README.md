@@ -116,6 +116,7 @@ The following options are supported:
 * `--config-file` - the name of the configuration file (defaults to ".tfmesh.yaml")
 * `--terraform-folder` - the name of the folder where Terraform files are located (defaults to the current directory).
 * `--terraform-file-pattern` - the pattern for matching Terraform files within the directory (defaults to *.tf).
+* `--var` - one or more variables to be added to the configuration file.
 * `--force` - allows for non-interactive reset of the configuration file for automation purposes.
 
 Example:
@@ -154,6 +155,7 @@ The following options are supported:
 * `--allowed` - returns only allowed versions when used in conjunction with the versions attribute.
 * `--exclude-prerelease` - returns all non-prerelease versions when used in conjunction with the versions attribute.
 * `--top` - returns the top n number of results when used in conjunction with the versions attribute.
+* `--var` - one or more variables to set on the command line.
 
 Example:
 ```cmd
@@ -178,6 +180,7 @@ The following options are supported:
 * `--exclude-prerelease` - ensures the set version is not a pre-release.
 * `--what-if` - allows for a dry run to see what would happen before making changes.
 * `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
+* `--var` - one or more variables to set on the command line.
 * `--force` - allows the version to be set to any value without validation.
 
 Example:
@@ -198,6 +201,7 @@ The following options are supported:
 * `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
 * `--no-color` - removes terminal color formatting.
 * `--verbose` - returns all resources as part of the plan including those with no version changes.
+* `--var` - one or more variables to set on the command line.
 
 Example:
 ```cmd
@@ -218,6 +222,7 @@ The following options are supported:
 * `--no-color` - removes terminal color formatting.
 * `--verbose` - returns all resources as part of the apply including those with no version changes.
 * `--auto-approve` - approves upgrades without prompting for user input.
+* `--var` - one or more variables to set on the command line.
 
 Example:
 ```cmd

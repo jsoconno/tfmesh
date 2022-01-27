@@ -178,6 +178,8 @@ def set_dependency_attribute(terraform_files, patterns, resource_type, name, att
 
     if current_value == new_value:
         result = pretty_print(f'The {attribute} is already set to "{new_value}".')
+    elif what_if:
+        result = pretty_print(f'The {attribute} was would have changed from "{current_value}" to "{new_value}".')
     elif attribute == "version" and request["status_code"] != 200 and force:
         update_version(
             filepath=dependencies[resource_type][name]["filepath"],
