@@ -289,13 +289,23 @@ Plan: 1 to upgrade, 1 to downgrade
 Variables allow users to pass data to Terraform Mesh, primarily for authenticating with private repositories.  If the same variable is assigned multiple values, Terraform Mesh uses the last value it finds, overriding any previous values.
 
 Terraform Mesh supports three methods for setting variables:
-Terraform Mesh loads variables in the following order, with later sources taking precedence over earlier ones:
 
-* **The command line** - variables can be passed on the command line for all commands using the `--var` flag.  All variables must be in the format `--var="name=value"`.  With this method, variables need to be passed every time they are required for a command.
-* **The configuration file** - variables can also be saved in the configuration file using the same `--var` syntax above.  This allows variables to be persistent across all commands making things simpler when working locally.  Be warned that secret values will be in plain text in the configuration file.  It is recommended to make sure to add this file to `.gitignore`.
-* **The terminal** - any variable can be set in the terminal as an environment variable.  Simple append `TFMESH_` to any variable you want to be able to reference in your session.  For example `export TFMESH_GITHUB_PAT=somethingprivate`.
+* **The command line** - variables can be passed on the command line for all commands using the `--var` flag.  All variables must be in the format `--var="name=value"`.  With this method, variables need to be passed every time they are required for a command.  In other words, they are not persisted.
+* **The configuration file** - variables can also be saved in the configuration file using the same `--var` syntax above in combination with the `init` command.  This allows variables to be persistent across all commands making things simpler when working locally.  Be warned that secret values will be in plain text in the configuration file.  It is recommended to make sure to add this file to `.gitignore`.
+* **The terminal** - any variable can be set in the terminal as an environment variable.  Simply append `TFMESH_` to any variable you want to be able to reference in your session.  For example `export TFMESH_GITHUB_PAT=somethingprivate`.
 
-Terraform Mesh will always load all variable sources in with earlier sources taking precedence over later ones:
+Terraform Mesh will always load all variable sources in with the earlier sources in this list taking precedence over later ones.  Valid variable names only use alphanumerics and underscores.  Any non-alphanumeric characters will be removed and dashes converted to underscores when the variable is processed.
+
+For example, setting a variable like `tfmesh get module some_module versions -var="som3-v@r=this"` would be converted on the backend to `TFMESH_SOM_VR=this` because the `3` at `@` symbol would be stripped and the dash (`-`) converted to an underscore (`_`).
+
+# Authentication
+
+The primary way that Terraform Mesh interacts with other private git repositories is through the user of personal access tokens (PAT).  For each supported private provider or module source a PAT must be provided.
+
+Supported private git repositories:
+* GitHub - use the `github_token` variable or `TFMESH_GITHUB_TOKEN` environment variable.
+
+To get versions from a private repo, the appropriate token variable must be set.  This can be done on the command line at runtime using the `--var` flag in combination with the `get`, `plan`, and `apply` commands.  This is the best option if you are targeting multiple private repos in your configuration.  Variables can also be set in your configuration using the `--var` flag in combination with `tfmesh init`.  The final way is to directly set the environment variable in the terminal using `export TFMESH_SOME_TOKEN`.
 
 # Handling errors
 
