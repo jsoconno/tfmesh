@@ -50,7 +50,7 @@ def get_terraform_files(terraform_folder=None, file_pattern='*.tf'):
     
     return file_list
 
-def set_config(config_file=".tfmesh.yaml", terraform_folder="", terraform_file_pattern="*.tf", var=None):
+def set_config(config_file=".tfmesh.yaml", terraform_folder="", terraform_file_pattern="*.tf", var=[]):
     """
     """
     variables = {}
@@ -783,7 +783,10 @@ def set_environment_variables(var, config_file=".tfmesh.yaml"):
     Sets environment variables based on config and command line variables.
     """
     # load configuration file variables
-    config_variables = yaml.safe_load(open(config_file))["variables"]
+    try:
+        config_variables = yaml.safe_load(open(config_file))["variables"]
+    except:
+        config_variables = {}
 
     # collect and clean command line variables
     command_line_variables = {}

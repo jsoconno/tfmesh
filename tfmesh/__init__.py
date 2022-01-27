@@ -12,7 +12,12 @@ from tfmesh.core import *
 @click.version_option()
 @click.pass_context
 def cli(ctx):
-    ctx.obj = get_config()
+    config = get_config()
+    
+    if config == None:
+        config = {"terraform_files": get_terraform_files()}
+
+    ctx.obj = config
 
 @cli.command("init")
 @click.option("--config-file", default=".tfmesh.yaml")
@@ -29,7 +34,7 @@ def init(config_file, terraform_folder, terraform_file_pattern, var, force):
         if force:
             set_config(config_file, terraform_folder, terraform_file_pattern, var)
             click.echo("The configuration was updated.")
-        if click.confirm("A configuration file already exists.  Would you like to update it?"):
+        elif click.confirm("A configuration file already exists.  Would you like to update it?"):
             set_config(config_file, terraform_folder, terraform_file_pattern, var)
             click.echo("The configuration was updated.")
         else:
