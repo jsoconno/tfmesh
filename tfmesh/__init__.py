@@ -1,18 +1,23 @@
 import click
 from pathlib import Path
-import os
-import re
-import requests
-import json
-import operator
-import yaml
+import sys
 from tfmesh.core import *
+
+choices = {
+    "GET": ["target", "filepath", "filename", "code", "name", "source", "version", "versions", "constraint", "lower_constraint_operator", "lower_constraint", "upper_constraint_operator", "upper_constraint"],
+    "SET": ["version", "constraint"]
+}
 
 @click.group("cli", invoke_without_command=True)
 @click.version_option()
 @click.pass_context
 def cli(ctx):
-    ctx.obj = get_config()
+    config = get_config()
+    
+    if config == None:
+        config = {"terraform_files": get_terraform_files()}
+
+    ctx.obj = config
 
 @cli.command("init")
 @click.option("--config-file", default=".tfmesh.yaml")
@@ -29,11 +34,12 @@ def init(config_file, terraform_folder, terraform_file_pattern, var, force):
         if force:
             set_config(config_file, terraform_folder, terraform_file_pattern, var)
             click.echo("The configuration was updated.")
-        if click.confirm("A configuration file already exists.  Would you like to update it?"):
-            set_config(config_file, terraform_folder, terraform_file_pattern, var)
-            click.echo("The configuration was updated.")
         else:
-            click.echo("The configuration was not changed.")
+            if click.confirm("A configuration file already exists.  Would you like to update it?"):
+                set_config(config_file, terraform_folder, terraform_file_pattern, var)
+                click.echo("The configuration was updated.")
+            else:
+                click.echo("The configuration was not changed.")
     else:
         set_config(config_file, terraform_folder, terraform_file_pattern, var)
         click.echo("The configuration was created.")
@@ -53,7 +59,7 @@ def set():
     pass
 
 @get.command("terraform")
-@click.argument("attribute", type=click.Choice(["target", "filepath", "filename", "code", "name", "source", "version", "versions", "constraint", "lower_constraint_operator", "lower_constraint", "upper_constraint_operator", "upper_constraint"]))
+@click.argument("attribute", required=False)
 @click.option("--allowed", is_flag=True)
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--top", type=int, default=None)
@@ -63,6 +69,9 @@ def terraform(config, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for the Terraform executable.
     """
+    is_valid = validate_attribute(attribute, choices["GET"])
+    if not is_valid:
+        sys.exit()
     set_environment_variables(var)
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
@@ -94,7 +103,7 @@ def providers(config):
 
 @get.command("provider")
 @click.argument("name", type=str)
-@click.argument("attribute", type=click.Choice(["target", "filepath", "filename", "code", "name", "source", "version", "versions", "constraint", "lower_constraint_operator", "lower_constraint", "upper_constraint_operator", "upper_constraint"]))
+@click.argument("attribute", required=False)
 @click.option("--allowed", is_flag=True)
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--top", type=int, default=None)
@@ -104,6 +113,9 @@ def provider(config, name, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for provider.
     """
+    is_valid = validate_attribute(attribute, choices["GET"])
+    if not is_valid:
+        sys.exit()
     set_environment_variables(var)
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
@@ -138,7 +150,7 @@ def modules(config):
 
 @get.command("module")
 @click.argument("name", type=str)
-@click.argument("attribute", type=click.Choice(["target", "filepath", "filename", "code", "name", "source", "version", "versions", "constraint", "lower_constraint_operator", "lower_constraint", "upper_constraint_operator", "upper_constraint"]))
+@click.argument("attribute", required=False)
 @click.option("--allowed", is_flag=True)
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--top", type=int, default=None)
@@ -148,6 +160,9 @@ def module(config, name, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for module.
     """
+    is_valid = validate_attribute(attribute, choices["GET"])
+    if not is_valid:
+        sys.exit()
     set_environment_variables(var)
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
@@ -167,17 +182,21 @@ def module(config, name, attribute, allowed, exclude_prerelease, top, var):
     click.echo(result)
 
 @set.command("terraform")
-@click.argument("attribute", type=click.Choice(["version", "constraint"]))
+@click.argument("attribute", required=False)
 @click.argument("value")
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--what-if", is_flag=True)
 @click.option("--ignore-constraints", is_flag=True)
+@click.option("--var", multiple=True)
 @click.option("--force", is_flag=True)
 @click.pass_obj
 def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_constraints, var, force):
     """
     Sets the version or constraint for the Terraform executable.
     """
+    is_valid = validate_attribute(attribute, choices["SET"])
+    if not is_valid:
+        sys.exit()
     set_environment_variables(var)
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],
@@ -197,7 +216,7 @@ def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_cons
 
 @set.command("provider")
 @click.argument("name", type=str)
-@click.argument("attribute", type=click.Choice(["version", "constraint"]))
+@click.argument("attribute", required=False)
 @click.argument("value")
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--what-if", is_flag=True)
@@ -209,6 +228,9 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
     """
     Sets the version or constraint for a given provider.
     """
+    is_valid = validate_attribute(attribute, choices["SET"])
+    if not is_valid:
+        sys.exit()
     set_environment_variables(var)
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],
@@ -228,7 +250,7 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
 
 @set.command("module")
 @click.argument("name", type=str)
-@click.argument("attribute", type=click.Choice(["version", "constraint"]))
+@click.argument("attribute", required=False)
 @click.argument("value")
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--what-if", is_flag=True)
@@ -240,6 +262,9 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
     """
     Sets the version or constraint for a given module.
     """
+    is_valid = validate_attribute(attribute, choices["SET"])
+    if not is_valid:
+        sys.exit()
     set_environment_variables(var)
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],

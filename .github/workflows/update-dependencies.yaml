@@ -36,7 +36,7 @@ jobs:
           output="${output//$'\r'/'%0D'}"
           echo "::set-output name=changelog::$output"
         env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          TFMESH_GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:

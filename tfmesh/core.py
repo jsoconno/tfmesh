@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import sys
 import requests
 import json
 import re
@@ -50,7 +51,7 @@ def get_terraform_files(terraform_folder=None, file_pattern='*.tf'):
     
     return file_list
 
-def set_config(config_file=".tfmesh.yaml", terraform_folder="", terraform_file_pattern="*.tf", var=None):
+def set_config(config_file=".tfmesh.yaml", terraform_folder="", terraform_file_pattern="*.tf", var=[]):
     """
     """
     variables = {}
@@ -132,7 +133,7 @@ def get_dependency_attribute(terraform_files, patterns, resource_type, name, att
             )
         )
         if request["status_code"] != 200:
-            result = pretty_print(f'The API call to return versions for {name} failed. {request["status_code"]} {request["reason"]}.')
+            result = pretty_print(f'The API call to return versions for {name} failed. {get_color("fail")}{request["status_code"]} {request["reason"]}{get_color()}.')
         elif allowed:
             result = pretty_print(allowed_versions, top=top)
         else:
@@ -189,7 +190,7 @@ def set_dependency_attribute(terraform_files, patterns, resource_type, name, att
         )
         result = pretty_print(f'The {attribute} was changed from "{current_value}" to "{new_value}" without validation.')
     elif attribute == "version" and request["status_code"] != 200:
-        result = pretty_print(f'The API call to return versions for {name} failed.')
+        result = pretty_print(f'The API call to return versions for {name} failed. {get_color("fail")}{request["status_code"]} {request["reason"]}{get_color()}')
     elif force or new_value in versions or attribute == "constraint":
         update_version(
             filepath=dependencies[resource_type][name]["filepath"],
@@ -783,7 +784,10 @@ def set_environment_variables(var, config_file=".tfmesh.yaml"):
     Sets environment variables based on config and command line variables.
     """
     # load configuration file variables
-    config_variables = yaml.safe_load(open(config_file))["variables"]
+    try:
+        config_variables = yaml.safe_load(open(config_file))["variables"]
+    except:
+        config_variables = {}
 
     # collect and clean command line variables
     command_line_variables = {}
@@ -803,3 +807,13 @@ def set_environment_variables(var, config_file=".tfmesh.yaml"):
         os.environ[name] = value
 
     return variables
+
+def validate_attribute(attribute, choices):
+    if attribute == None:
+        print(pretty_print(choices, "Select on of the following:"))
+        return False
+    elif attribute not in choices:
+        print(pretty_print(choices, f'"{attribute}" is not a valid attribute.  Select on of the following:'))
+        return False
+    else:
+        return True
