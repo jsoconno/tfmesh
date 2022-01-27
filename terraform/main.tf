@@ -1,6 +1,6 @@
 module "consul" {
   source = "hashicorp/consul/aws"
-  version = "0.11.0" # ~>0.5.0
+  version = "0.5.0" # ~>0.5.0
 }
 
 module "conventions" {
