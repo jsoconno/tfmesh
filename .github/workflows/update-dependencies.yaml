@@ -29,6 +29,7 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install --editable .
+          tfmesh init --terraform-folder terraform
           output=$(tfmesh apply)
           output="${output//'%'/'%25'}"
           output="${output//$'\n'/'%0A'}"
