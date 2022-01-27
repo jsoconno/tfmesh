@@ -28,7 +28,8 @@ jobs:
         id: tfmesh
         run: |
           pip install -r requirements.txt
-          output=$(python main.py)
+          pip install --editable ../../.
+          output=$(tfmesh apply)
           output="${output//'%'/'%25'}"
           output="${output//$'\n'/'%0A'}"
           output="${output//$'\r'/'%0D'}"
