@@ -132,7 +132,7 @@ def get_dependency_attribute(terraform_files, patterns, resource_type, name, att
             )
         )
         if request["status_code"] != 200:
-            result = pretty_print(f'The API call to return versions for {name} failed.')
+            result = pretty_print(f'The API call to return versions for {name} failed. {request["status_code"]} {request["reason"]}.')
         elif allowed:
             result = pretty_print(allowed_versions, top=top)
         else:
