@@ -50,12 +50,21 @@ def get_terraform_files(terraform_folder=None, file_pattern='*.tf'):
     
     return file_list
 
-def set_config(config_file=".tfmesh.yaml", terraform_folder="", terraform_file_pattern="*.tf"):
+def set_config(config_file=".tfmesh.yaml", terraform_folder="", terraform_file_pattern="*.tf", var=None):
+    """
+    """
+    variables = {}
+    for v in var:
+        name, value = re.findall(r'(\S*) *= *(\S*)', v)[0]
+        name = re.sub(r'[^a-zA-Z0-9_]', "", name)
+        variables[name] = value
+
     with open(config_file, 'w') as config_file:
         config = {
             "terraform_folder": terraform_folder,
             "terraform_file_pattern": terraform_file_pattern,
-            "terraform_files": get_terraform_files(terraform_folder, terraform_file_pattern)
+            "terraform_files": get_terraform_files(terraform_folder, terraform_file_pattern),
+            "variables": variables
         }
         yaml.dump(config, config_file, default_flow_style=False)
 
@@ -107,13 +116,12 @@ def get_dependency_attribute(terraform_files, patterns, resource_type, name, att
         patterns=patterns
     )
     if attribute == "versions":
-        available_versions = sort_versions(
-            get_available_versions(
-                target=dependencies[resource_type][name]["target"],
-                source=dependencies[resource_type][name]["source"],
-                exclude_pre_release=exclude_prerelease
-            )
+        request = get_available_versions(
+            target=dependencies[resource_type][name]["target"],
+            source=dependencies[resource_type][name]["source"],
+            exclude_pre_release=exclude_prerelease
         )
+        available_versions = sort_versions(request["versions"])
         allowed_versions = sort_versions(
             get_allowed_versions(
                 available_versions,
@@ -123,7 +131,9 @@ def get_dependency_attribute(terraform_files, patterns, resource_type, name, att
                 dependencies[resource_type][name]["upper_constraint_operator"],
             )
         )
-        if allowed:
+        if request["status_code"] != 200:
+            result = pretty_print(f'The API call to return versions for {name} failed.')
+        elif allowed:
             result = pretty_print(allowed_versions, top=top)
         else:
             result = pretty_print(available_versions, top=top)
@@ -141,13 +151,12 @@ def set_dependency_attribute(terraform_files, patterns, resource_type, name, att
         patterns=patterns
     )
     if attribute == "version":
-        available_versions = sort_versions(
-            get_available_versions(
-                target=dependencies[resource_type][name]["target"],
-                source=dependencies[resource_type][name]["source"],
-                exclude_pre_release=exclude_prerelease
-            )
+        request = get_available_versions(
+            target=dependencies[resource_type][name]["target"],
+            source=dependencies[resource_type][name]["source"],
+            exclude_pre_release=exclude_prerelease
         )
+        available_versions = sort_versions(request["versions"])
         allowed_versions = sort_versions(
             get_allowed_versions(
                 available_versions,
@@ -169,6 +178,18 @@ def set_dependency_attribute(terraform_files, patterns, resource_type, name, att
 
     if current_value == new_value:
         result = pretty_print(f'The {attribute} is already set to "{new_value}".')
+    elif what_if:
+        result = pretty_print(f'The {attribute} was would have changed from "{current_value}" to "{new_value}".')
+    elif attribute == "version" and request["status_code"] != 200 and force:
+        update_version(
+            filepath=dependencies[resource_type][name]["filepath"],
+            code=dependencies[resource_type][name]["code"],
+            attribute=attribute,
+            value=value
+        )
+        result = pretty_print(f'The {attribute} was changed from "{current_value}" to "{new_value}" without validation.')
+    elif attribute == "version" and request["status_code"] != 200:
+        result = pretty_print(f'The API call to return versions for {name} failed.')
     elif force or new_value in versions or attribute == "constraint":
         update_version(
             filepath=dependencies[resource_type][name]["filepath"],
@@ -224,11 +245,20 @@ def get_github_module_versions(user, repo, token=None):
     else:
         response = requests.get(f"https://api.github.com/repos/{user}/{repo}/tags")
 
-    tag_data = json.loads(response.text)
+    if response.status_code == 200:
+        tag_data = json.loads(response.text)
+        versions = [x["name"] for x in tag_data]
+    else:
+        # error = f'{response.status_code} {response.reason}'
+        versions = []
 
-    tag_list = [x["name"] for x in tag_data]
+    result = {
+        "status_code": response.status_code,
+        "reason": response.reason,
+        "versions": versions
+    }
 
-    return tag_list
+    return result
 
 def get_terraform_module_versions(source):
     """
@@ -236,8 +266,14 @@ def get_terraform_module_versions(source):
     """
     response = requests.get(f"https://registry.terraform.io/v1/modules/{source}")
     data = json.loads(response.text)
+
+    result = {
+        "status_code": response.status_code,
+        "reason": response.reason,
+        "versions": data["versions"]
+    }
     
-    return data["versions"]
+    return result
 
 def get_terraform_provider_versions(source):
     """
@@ -245,8 +281,14 @@ def get_terraform_provider_versions(source):
     """
     response = requests.get(f"https://registry.terraform.io/v1/providers/{source}")
     data = json.loads(response.text)
+
+    result = {
+        "status_code": response.status_code,
+        "reason": response.reason,
+        "versions": data["versions"]
+    }
     
-    return data["versions"]
+    return result
 
 def get_terraform_versions():
     """
@@ -257,7 +299,13 @@ def get_terraform_versions():
     pattern = r'terraform_((\d+)\.*(\d+)*\.*(\d+)*-?([\S]*))</a>'
     versions = re.findall(pattern, response.text)
 
-    return [version[0] for version in versions]
+    result = {
+        "status_code": response.status_code,
+        "reason": response.reason,
+        "versions": [version[0] for version in versions]
+    }
+
+    return result
 
 def get_github_user_and_repo(source):
     """
@@ -278,9 +326,9 @@ def get_available_versions(target, source=None, exclude_pre_release=False):
     """
     # Get required environment variables
     try:
-        github_token = os.environ["PAT_TOKEN"]
+        github_token = os.environ["TFMESH_GITHUB_TOKEN"]
     except:
-        pass
+        github_token = ""
 
     # Pull available versions
     if target == "modules" and "github" in source:
@@ -296,7 +344,8 @@ def get_available_versions(target, source=None, exclude_pre_release=False):
         available_versions = None
 
     if exclude_pre_release:
-        available_versions = [version for version in available_versions if len(get_semantic_version(version)) < 4]
+        versions = available_versions["versions"]
+        available_versions["versions"] = [version for version in versions if len(get_semantic_version(version)) < 4]
 
     return available_versions
 
@@ -595,14 +644,17 @@ def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=Fa
         "no change": 0
     }
 
+    failures = 0
+
     # iterate through resources to get available and allowed versions
     for resource_type, resources in resources.items():
         for resource, attributes in resources.items():
-            available_versions = get_available_versions(
+            request = get_available_versions(
                 target=attributes["target"],
                 source=attributes["source"],
                 exclude_pre_release=exclude_prerelease
             )
+            available_versions = request["versions"]
             allowed_versions = get_allowed_versions(
                 available_versions,
                 attributes["lower_constraint"],
@@ -652,16 +704,21 @@ def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=Fa
                 else:
                     pass
             else:
+                if request["status_code"] != 200:
+                    failures += 1
                 if verbose:
                     plan["no change"] += 1
-                    # iterate through code
-                    for line in code:
-                        if current_version in line:
-                            print(f'{prefix_status(status["symbol"], line, status["color"])}{"" if no_color else get_color(status["color"])} // {status["action"]}{"" if no_color else get_color()}')
-                        else:
-                            print(line)
+                    if request["status_code"] != 200:
+                        print(f'{get_color("fail")}~/x {get_color()}The API call to return versions for {attributes["target"]} "{attributes["name"]}" failed.{get_color("fail")} // {request["status_code"]} {request["reason"]}.{get_color()}\n\n')
+                    else:
+                        # iterate through code
+                        for line in code:
+                            if current_version in line:
+                                print(f'{prefix_status(status["symbol"], line, status["color"])}{"" if no_color else get_color(status["color"])} // {status["action"]} - {status["status"]}{"" if no_color else get_color()}')
+                            else:
+                                print(line)
 
-                    print("\n")
+                        print("\n")
 
     if apply:
         print(f'{"" if no_color else get_color("ok_green")}Apply complete!  Resources: {plan["upgrade"]} upgraded, {plan["downgrade"]} downgraded{"" if no_color else get_color()}')
@@ -671,6 +728,13 @@ def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=Fa
         print(f'{"" if no_color else get_color("ok_green")}Plan: {plan["upgrade"]} to upgrade, {plan["downgrade"]} to downgrade{"" if no_color else get_color()}')
     else:
         print(f'{"" if no_color else get_color("ok_green")}No changes.  Dependency versions are up-to-date.{"" if no_color else get_color()}')
+
+    if failures >= 1:
+        print(f'\n{get_color("fail")}Warning: {failures} resource(s) failed to return a list of available versions.{get_color()}')
+        if apply:
+            print(f'{get_color("fail")}These resources were not modified during apply.{get_color()}')
+        if not verbose:
+            print(f'{get_color("fail")}For more details, run the command again with the "--verbose" flag.{get_color()}')
 
     return None
 
@@ -713,3 +777,29 @@ def pretty_code(code, spaces=4, indent_symbols = ("{", "[", "("), outdent_symbol
         new_code.append(line_of_code)
 
     return "\n".join(new_code)
+
+def set_environment_variables(var, config_file=".tfmesh.yaml"):
+    """
+    Sets environment variables based on config and command line variables.
+    """
+    # load configuration file variables
+    config_variables = yaml.safe_load(open(config_file))["variables"]
+
+    # collect and clean command line variables
+    command_line_variables = {}
+    for v in var:
+        name, value = re.findall(r'(\S*) *= *(\S*)', v)[0]
+        name = name.replace("-", "_")
+        name = re.sub(r'[^a-zA-Z0-9_]', "", name)
+        command_line_variables[name] = value
+
+    # merge config variables with command line variables
+    variables = dict(list(config_variables.items()) + list(command_line_variables.items()))
+
+    # set environment variables
+    for name, value in variables.items():
+        # set the environment variable
+        name = f"TFMESH_{name.upper()}"
+        os.environ[name] = value
+
+    return variables

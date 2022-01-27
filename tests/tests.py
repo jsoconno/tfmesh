@@ -28,16 +28,16 @@ class TestCore(unittest.TestCase):
         """
         Test that a list of tags can be returned from a github repo without headers.
         """
-        actual = isinstance(get_github_module_versions(user='jsoconno', repo='tfmesh'), list)
-        expected = isinstance([], list)
+        result = get_github_module_versions(user='jsoconno', repo='tfmesh')
 
-        self.assertEqual(actual, expected)
+        self.assertGreater(len(result["versions"]), 0)
+        self.assertEqual(result["status_code"], 200)
 
     def test_get_terraform_provider_versions(self):
         """
         Test that a list of versions can be returned from hashicorp for a given provider such as aws, gcp, or azurerm.
         """
-        provider_versions = get_terraform_provider_versions(source="hashicorp/aws")
+        provider_versions = get_terraform_provider_versions(source="hashicorp/aws")["versions"]
 
         self.assertIn('3.70.0', provider_versions)
 
@@ -160,8 +160,8 @@ class TestCore(unittest.TestCase):
         """
         Test that the number of available versions is less when pre-releases are excluded.
         """
-        result_with_pre_releases = get_available_versions("terraform", exclude_pre_release=False)
-        result_without_pre_releases = get_available_versions("terraform", exclude_pre_release=True)
+        result_with_pre_releases = get_available_versions("terraform", exclude_pre_release=False)["versions"]
+        result_without_pre_releases = get_available_versions("terraform", exclude_pre_release=True)["versions"]
 
         self.assertGreater(result_with_pre_releases, result_without_pre_releases)
         self.assertIn("0.12.0-alpha3", result_with_pre_releases)

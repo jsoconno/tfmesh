@@ -18,23 +18,24 @@ def cli(ctx):
 @click.option("--config-file", default=".tfmesh.yaml")
 @click.option("--terraform-folder", default="")
 @click.option("--terraform-file-pattern", default="*.tf")
+@click.option("--var", multiple=True)
 @click.option("--force", is_flag=True)
-def init(config_file, terraform_folder, terraform_file_pattern, force):
+def init(config_file, terraform_folder, terraform_file_pattern, var, force):
     """
     Initializes a file with details about the configuration.
     """
     config_file = Path(config_file)
     if config_file.is_file():
         if force:
-            set_config(config_file, terraform_folder, terraform_file_pattern)
+            set_config(config_file, terraform_folder, terraform_file_pattern, var)
             click.echo("The configuration was updated.")
         if click.confirm("A configuration file already exists.  Would you like to update it?"):
-            set_config(config_file, terraform_folder, terraform_file_pattern)
+            set_config(config_file, terraform_folder, terraform_file_pattern, var)
             click.echo("The configuration was updated.")
         else:
             click.echo("The configuration was not changed.")
     else:
-        set_config(config_file, terraform_folder, terraform_file_pattern)
+        set_config(config_file, terraform_folder, terraform_file_pattern, var)
         click.echo("The configuration was created.")
 
 @cli.group("get")
@@ -56,11 +57,13 @@ def set():
 @click.option("--allowed", is_flag=True)
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--top", type=int, default=None)
+@click.option("--var", multiple=True)
 @click.pass_obj
-def terraform(config, attribute, allowed, exclude_prerelease, top):
+def terraform(config, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for the Terraform executable.
     """
+    set_environment_variables(var)
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -95,11 +98,13 @@ def providers(config):
 @click.option("--allowed", is_flag=True)
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--top", type=int, default=None)
+@click.option("--var", multiple=True)
 @click.pass_obj
-def provider(config, name, attribute, allowed, exclude_prerelease, top):
+def provider(config, name, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for provider.
     """
+    set_environment_variables(var)
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -137,11 +142,13 @@ def modules(config):
 @click.option("--allowed", is_flag=True)
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--top", type=int, default=None)
+@click.option("--var", multiple=True)
 @click.pass_obj
-def module(config, name, attribute, allowed, exclude_prerelease, top):
+def module(config, name, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for module.
     """
+    set_environment_variables(var)
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -167,10 +174,11 @@ def module(config, name, attribute, allowed, exclude_prerelease, top):
 @click.option("--ignore-constraints", is_flag=True)
 @click.option("--force", is_flag=True)
 @click.pass_obj
-def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_constraints, force):
+def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_constraints, var, force):
     """
     Sets the version or constraint for the Terraform executable.
     """
+    set_environment_variables(var)
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -194,12 +202,14 @@ def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_cons
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--what-if", is_flag=True)
 @click.option("--ignore-constraints", is_flag=True)
+@click.option("--var", multiple=True)
 @click.option("--force", is_flag=True)
 @click.pass_obj
-def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, force):
+def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, var, force):
     """
     Sets the version or constraint for a given provider.
     """
+    set_environment_variables(var)
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -223,12 +233,14 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
 @click.option("--exclude-prerelease", is_flag=True)
 @click.option("--what-if", is_flag=True)
 @click.option("--ignore-constraints", is_flag=True)
+@click.option("--var", multiple=True)
 @click.option("--force", is_flag=True)
 @click.pass_obj
-def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, force):
+def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, var, force):
     """
     Sets the version or constraint for a given module.
     """
+    set_environment_variables(var)
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],
         patterns={
@@ -254,11 +266,13 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
 @click.option("--ignore-constraints", is_flag=True)
 @click.option("--no-color", is_flag=True)
 @click.option("--verbose", is_flag=True)
+@click.option("--var", multiple=True)
 @click.pass_obj
-def plan(config, target, exclude_prerelease, ignore_constraints, no_color, verbose):
+def plan(config, target, exclude_prerelease, ignore_constraints, no_color, verbose, var):
     """
     Plans what version changes will be made to the configuration.
     """
+    set_environment_variables(var)
     run_plan_apply(
         terraform_files=config["terraform_files"],
         patterns = {
@@ -283,11 +297,13 @@ def plan(config, target, exclude_prerelease, ignore_constraints, no_color, verbo
 @click.option("--no-color", is_flag=True)
 @click.option("--verbose", is_flag=True)
 @click.option("--auto-approve", is_flag=True)
+@click.option("--var", multiple=True)
 @click.pass_obj
-def apply(config, target, exclude_prerelease, ignore_constraints, no_color, verbose, auto_approve):
+def apply(config, target, exclude_prerelease, ignore_constraints, no_color, verbose, auto_approve, var):
     """
     Applies configuration version changes.
     """
+    set_environment_variables(var)
     run_plan_apply(
         terraform_files=config["terraform_files"],
         patterns = {

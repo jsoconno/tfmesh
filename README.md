@@ -116,6 +116,7 @@ The following options are supported:
 * `--config-file` - the name of the configuration file (defaults to ".tfmesh.yaml")
 * `--terraform-folder` - the name of the folder where Terraform files are located (defaults to the current directory).
 * `--terraform-file-pattern` - the pattern for matching Terraform files within the directory (defaults to *.tf).
+* `--var` - one or more variables to be added to the configuration file.
 * `--force` - allows for non-interactive reset of the configuration file for automation purposes.
 
 Example:
@@ -154,6 +155,7 @@ The following options are supported:
 * `--allowed` - returns only allowed versions when used in conjunction with the versions attribute.
 * `--exclude-prerelease` - returns all non-prerelease versions when used in conjunction with the versions attribute.
 * `--top` - returns the top n number of results when used in conjunction with the versions attribute.
+* `--var` - one or more variables to set on the command line.
 
 Example:
 ```cmd
@@ -178,6 +180,7 @@ The following options are supported:
 * `--exclude-prerelease` - ensures the set version is not a pre-release.
 * `--what-if` - allows for a dry run to see what would happen before making changes.
 * `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
+* `--var` - one or more variables to set on the command line.
 * `--force` - allows the version to be set to any value without validation.
 
 Example:
@@ -198,6 +201,7 @@ The following options are supported:
 * `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
 * `--no-color` - removes terminal color formatting.
 * `--verbose` - returns all resources as part of the plan including those with no version changes.
+* `--var` - one or more variables to set on the command line.
 
 Example:
 ```cmd
@@ -218,6 +222,7 @@ The following options are supported:
 * `--no-color` - removes terminal color formatting.
 * `--verbose` - returns all resources as part of the apply including those with no version changes.
 * `--auto-approve` - approves upgrades without prompting for user input.
+* `--var` - one or more variables to set on the command line.
 
 Example:
 ```cmd
@@ -271,11 +276,53 @@ terraform {
 -/. required_version = "1.1.4" # =1.0.0 // downgrade to latest allowed = 1.0.0
 
 
-        aws = {
-            source = "hashicorp/aws"
-        +/* version = "3.72.0" # ~>3.0 // upgrade to latest available = 3.73.0
-        }
+aws = {
+    source = "hashicorp/aws"
++/* version = "3.72.0" # ~>3.0 // upgrade to latest available = 3.73.0
+}
 
 
 Plan: 1 to upgrade, 1 to downgrade
 ```
+# Setting variables
+
+Variables allow users to pass data to Terraform Mesh, primarily for authenticating with private repositories.  If the same variable is assigned multiple values, Terraform Mesh uses the last value it finds, overriding any previous values.
+
+Terraform Mesh supports three methods for setting variables:
+
+* **The command line** - variables can be passed on the command line for all commands using the `--var` flag.  All variables must be in the format `--var="name=value"`.  With this method, variables need to be passed every time they are required for a command.  In other words, they are not persisted.
+* **The configuration file** - variables can also be saved in the configuration file using the same `--var` syntax above in combination with the `init` command.  This allows variables to be persistent across all commands making things simpler when working locally.  Be warned that secret values will be in plain text in the configuration file.  It is recommended to make sure to add this file to `.gitignore`.
+* **The terminal** - any variable can be set in the terminal as an environment variable.  Simply append `TFMESH_` to any variable you want to be able to reference in your session.  For example `export TFMESH_GITHUB_PAT=somethingprivate`.
+
+Terraform Mesh will always load all variable sources in with the earlier sources in this list taking precedence over later ones.  Valid variable names only use alphanumerics and underscores.  Any non-alphanumeric characters will be removed and dashes converted to underscores when the variable is processed.
+
+For example, setting a variable like `tfmesh get module some_module versions -var="som3-v@r=this"` would be converted on the backend to `TFMESH_SOM_VR=this` because the `3` at `@` symbol would be stripped and the dash (`-`) converted to an underscore (`_`).
+
+# Authentication
+
+The primary way that Terraform Mesh interacts with other private git repositories is through the user of personal access tokens (PAT).  For each supported private provider or module source a PAT must be provided.
+
+Supported private git repositories:
+* GitHub - use the `github_token` variable or `TFMESH_GITHUB_TOKEN` environment variable.
+
+To get versions from a private repo, the appropriate token variable must be set.  This can be done on the command line at runtime using the `--var` flag in combination with the `get`, `plan`, and `apply` commands.  This is the best option if you are targeting multiple private repos in your configuration.  Variables can also be set in your configuration using the `--var` flag in combination with `tfmesh init`.  The final way is to directly set the environment variable in the terminal using `export TFMESH_SOME_TOKEN`.
+
+# Handling errors
+
+Support was added to allow users to see when a resource that is located in a private repo is not accessible for some reason.
+
+Below are the common errors and what they most likely mean.
+
+**404 Not Found** - The authentication token (PAT) for the target repository is not set.  This can be set on the command line or added to the configuration file using the `--var` flag.  
+
+Note that if you add a token to the configuration file it will be in plain text.  Please protect this information and be sure to add the file to your `.gitignore`.  
+
+Examples:
+```cmd
+tfmesh init --var="github_pat=somethingprivate"
+```
+```cmd
+tfmesh plan --var="github_pat=somethingprivate"
+```
+
+**401 Unauthorized** - An authentication token (PAT) for the target repository was set, but is either invalid or expired.
