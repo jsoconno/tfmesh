@@ -189,7 +189,7 @@ def set_dependency_attribute(terraform_files, patterns, resource_type, name, att
         )
         result = pretty_print(f'The {attribute} was changed from "{current_value}" to "{new_value}" without validation.')
     elif attribute == "version" and request["status_code"] != 200:
-        result = pretty_print(f'The API call to return versions for {name} failed.')
+        result = pretty_print(f'The API call to return versions for {name} failed. {get_color("fail")}{request["status_code"]} {request["reason"]}{get_color()}')
     elif force or new_value in versions or attribute == "constraint":
         update_version(
             filepath=dependencies[resource_type][name]["filepath"],
