@@ -326,7 +326,7 @@ def get_available_versions(target, source=None, exclude_pre_release=False):
     """
     # Get required environment variables
     try:
-        github_token = os.environ["TFMESH_GITHUB_PAT"]
+        github_token = os.environ["TFMESH_GITHUB_TOKEN"]
     except:
         github_token = ""
 
