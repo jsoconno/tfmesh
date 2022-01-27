@@ -1,11 +1,6 @@
 import click
 from pathlib import Path
-import os
-import re
-import requests
-import json
-import operator
-import yaml
+import sys
 from tfmesh.core import *
 
 choices = {
@@ -76,7 +71,7 @@ def terraform(config, attribute, allowed, exclude_prerelease, top, var):
     """
     is_valid = validate_attribute(attribute, choices["GET"])
     if not is_valid:
-        raise click.Abort()
+        sys.exit()
     set_environment_variables(var)
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
@@ -120,7 +115,7 @@ def provider(config, name, attribute, allowed, exclude_prerelease, top, var):
     """
     is_valid = validate_attribute(attribute, choices["GET"])
     if not is_valid:
-        raise click.Abort()
+        sys.exit()
     set_environment_variables(var)
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
@@ -167,7 +162,7 @@ def module(config, name, attribute, allowed, exclude_prerelease, top, var):
     """
     is_valid = validate_attribute(attribute, choices["GET"])
     if not is_valid:
-        raise click.Abort()
+        sys.exit()
     set_environment_variables(var)
     result = get_dependency_attribute(
         terraform_files=config["terraform_files"],
@@ -201,7 +196,7 @@ def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_cons
     """
     is_valid = validate_attribute(attribute, choices["SET"])
     if not is_valid:
-        raise click.Abort()
+        sys.exit()
     set_environment_variables(var)
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],
@@ -235,7 +230,7 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
     """
     is_valid = validate_attribute(attribute, choices["SET"])
     if not is_valid:
-        raise click.Abort()
+        sys.exit()
     set_environment_variables(var)
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],
@@ -269,7 +264,7 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
     """
     is_valid = validate_attribute(attribute, choices["SET"])
     if not is_valid:
-        raise click.Abort()
+        sys.exit()
     set_environment_variables(var)
     result = set_dependency_attribute(
         terraform_files=config["terraform_files"],

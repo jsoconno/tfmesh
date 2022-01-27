@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import sys
 import requests
 import json
 import re
@@ -809,7 +810,7 @@ def set_environment_variables(var, config_file=".tfmesh.yaml"):
 
 def validate_attribute(attribute, choices):
     if attribute == None:
-        print(pretty_print(choices, "Select one of the following attributes:"))
+        print(pretty_print(choices, "Select on of the following:"))
         return False
     elif attribute not in choices:
         print(pretty_print(choices, f'"{attribute}" is not a valid attribute.  Select on of the following:'))
