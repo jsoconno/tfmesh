@@ -342,7 +342,8 @@ def get_available_versions(target, source=None, exclude_pre_release=False):
         available_versions = None
 
     if exclude_pre_release:
-        available_versions = [version for version in available_versions if len(get_semantic_version(version)) < 4]
+        versions = available_versions["versions"]
+        available_versions["versions"] = [version for version in versions if len(get_semantic_version(version)) < 4]
 
     return available_versions
 
