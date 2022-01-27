@@ -284,3 +284,30 @@ aws = {
 
 Plan: 1 to upgrade, 1 to downgrade
 ```
+# Setting variables
+
+There are three ways to add a variable to Terraform Mesh.  The following list provides the options in order of highest to lowest precedence:
+
+* **The command line** - variables can be passed on the command line for all commands using the `--var` flag.  All variables must be in the format `--var="name=value"`.  With this method, variables need to be passed every time they are required for a command.
+* **The configuration file** - variables can also be saved in the configuration file using the same `--var` syntax above.  This allows variables to be persistent across all commands making things simpler when working locally.  Be warned that secret values will be in plain text in the configuration file.  It is recommended to make sure to add this file to `.gitignore`.
+* **The terminal** - any variable can be set in the terminal as an environment variable.  Simple append `TFMESH_` to any variable you want to be able to reference in your session.  For example `export TFMESH_GITHUB_PAT=somethingprivate`.
+
+# Handling errors
+
+Support was added to allow users to see when a resource that is located in a private repo is not accessible for some reason.
+
+Below are the common errors and what they most likely mean.
+
+**404 Not Found** - The authentication token (PAT) for the target repository is not set.  This can be set on the command line or added to the configuration file using the `--var` flag.  
+
+Note that if you add a token to the configuration file it will be in plain text.  Please protect this information and be sure to add the file to your `.gitignore`.  
+
+Examples:
+```cmd
+tfmesh init --var="github_pat=somethingprivate"
+```
+```cmd
+tfmesh plan --var="github_pat=somethingprivate"
+```
+
+**401 Unauthorized** - An authentication token (PAT) for the target repository was set, but is either invalid or expired.
