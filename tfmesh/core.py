@@ -132,7 +132,7 @@ def get_dependency_attribute(terraform_files, patterns, resource_type, name, att
             )
         )
         if request["status_code"] != 200:
-            result = pretty_print(f'The API call to return versions for {name} failed. {request["status_code"]} {request["reason"]}.')
+            result = pretty_print(f'The API call to return versions for {name} failed. {get_color("fail")}{request["status_code"]} {request["reason"]}{get_color()}.')
         elif allowed:
             result = pretty_print(allowed_versions, top=top)
         else:
@@ -806,3 +806,13 @@ def set_environment_variables(var, config_file=".tfmesh.yaml"):
         os.environ[name] = value
 
     return variables
+
+def validate_attribute(attribute, choices):
+    if attribute == None:
+        print(pretty_print(choices, "Select one of the following attributes:"))
+        return False
+    elif attribute not in choices:
+        print(pretty_print(choices, f'"{attribute}" is not a valid attribute.  Select on of the following:'))
+        return False
+    else:
+        return True
