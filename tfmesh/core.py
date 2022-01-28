@@ -11,6 +11,7 @@ from collections import defaultdict
 
 def colors(color="END"):
     """
+    Gets colors codes used for outputting text with color to the CLI.
     """
     colors = {
         "HEADER": "\033[95m",
