@@ -3,11 +3,6 @@ from pathlib import Path
 import sys
 from tfmesh.core import *
 
-choices = {
-    "GET": ["target", "filepath", "filename", "code", "name", "source", "version", "versions", "constraint", "lower_constraint_operator", "lower_constraint", "upper_constraint_operator", "upper_constraint"],
-    "SET": ["version", "constraint"]
-}
-
 @click.group("cli", invoke_without_command=True)
 @click.version_option()
 @click.pass_context
@@ -69,7 +64,7 @@ def terraform(config, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for the Terraform executable.
     """
-    is_valid = validate_attribute(attribute, choices["GET"])
+    is_valid = validate_attribute(attribute, options("GET"))
     if not is_valid:
         sys.exit()
     set_environment_variables(var)
@@ -113,7 +108,7 @@ def provider(config, name, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for provider.
     """
-    is_valid = validate_attribute(attribute, choices["GET"])
+    is_valid = validate_attribute(attribute, options("GET"))
     if not is_valid:
         sys.exit()
     set_environment_variables(var)
@@ -160,7 +155,7 @@ def module(config, name, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for module.
     """
-    is_valid = validate_attribute(attribute, choices["GET"])
+    is_valid = validate_attribute(attribute, options("GET"))
     if not is_valid:
         sys.exit()
     set_environment_variables(var)
@@ -194,7 +189,7 @@ def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_cons
     """
     Sets the version or constraint for the Terraform executable.
     """
-    is_valid = validate_attribute(attribute, choices["SET"])
+    is_valid = validate_attribute(attribute, options("SET"))
     if not is_valid:
         sys.exit()
     set_environment_variables(var)
@@ -228,7 +223,7 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
     """
     Sets the version or constraint for a given provider.
     """
-    is_valid = validate_attribute(attribute, choices["SET"])
+    is_valid = validate_attribute(attribute, options("SET"))
     if not is_valid:
         sys.exit()
     set_environment_variables(var)
@@ -262,7 +257,7 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
     """
     Sets the version or constraint for a given module.
     """
-    is_valid = validate_attribute(attribute, choices["SET"])
+    is_valid = validate_attribute(attribute, options("SET"))
     if not is_valid:
         sys.exit()
     set_environment_variables(var)

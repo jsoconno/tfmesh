@@ -9,22 +9,32 @@ import yaml
 from tabulate import tabulate
 from collections import defaultdict
 
-def get_color(color="end"):
+def colors(color="END"):
     """
     """
     colors = {
-        "header": "\033[95m",
-        "ok_blue": "\033[94m",
-        "ok_cyan": "\033[96m",
-        "ok_green": "\033[92m",
-        "warning": "\033[93m",
-        "fail": "\033[91m",
-        "end": "\033[0m",
-        "bold": "\033[1m",
-        "underline": "\033[4m",
+        "HEADER": "\033[95m",
+        "OK_BLUE": "\033[94m",
+        "OK_CYAN": "\033[96m",
+        "OK_GREEN": "\033[92m",
+        "WARNING": "\033[93m",
+        "FAIL": "\033[91m",
+        "END": "\033[0m",
+        "BOLD": "\033[1m",
+        "UNDERLINE": "\033[4m",
     }
 
     return colors[color]
+
+def options(option):
+    """
+    """
+    options = {
+        "GET": ["target", "filepath", "filename", "code", "name", "source", "version", "versions", "constraint", "lower_constraint_operator", "lower_constraint", "upper_constraint_operator", "upper_constraint"],
+        "SET": ["version", "constraint"]
+    }
+
+    return options[option]
 
 def patterns(pattern):
     """
@@ -133,7 +143,7 @@ def get_dependency_attribute(terraform_files, patterns, resource_type, name, att
             )
         )
         if request["status_code"] != 200:
-            result = pretty_print(f'The API call to return versions for {name} failed. {get_color("fail")}{request["status_code"]} {request["reason"]}{get_color()}.')
+            result = pretty_print(f'The API call to return versions for {name} failed. {colors("FAIL")}{request["status_code"]} {request["reason"]}{colors()}.')
         elif allowed:
             result = pretty_print(allowed_versions, top=top)
         else:
@@ -190,7 +200,7 @@ def set_dependency_attribute(terraform_files, patterns, resource_type, name, att
         )
         result = pretty_print(f'The {attribute} was changed from "{current_value}" to "{new_value}" without validation.')
     elif attribute == "version" and request["status_code"] != 200:
-        result = pretty_print(f'The API call to return versions for {name} failed. {get_color("fail")}{request["status_code"]} {request["reason"]}{get_color()}')
+        result = pretty_print(f'The API call to return versions for {name} failed. {colors("FAIL")}{request["status_code"]} {request["reason"]}{colors()}')
     elif force or new_value in versions or attribute == "constraint":
         update_version(
             filepath=dependencies[resource_type][name]["filepath"],
@@ -511,21 +521,21 @@ def get_status(current_version, latest_available_version, latest_allowed_version
             "symbol": "~/x",
             "action": "no change",
             "status": "no suitable version",
-            "color": "fail"
+            "color": "FAIL"
         }
     elif compare_versions(current_version, "=", latest_available_version) and compare_versions(current_version, "=", latest_allowed_version):
         status = {
             "symbol": "~/*",
             "action": "no change",
             "status": "latest available",
-            "color": "ok_green"
+            "color": "OK_GREEN"
         }
     elif compare_versions(current_version, "!=", latest_available_version) and compare_versions(current_version, "=", latest_allowed_version):
         status = {
             "symbol": "~/.",
             "action": "no change",
             "status": "latest allowed",
-            "color": "warning"
+            "color": "WARNING"
         }
     # current < available and available = allowed
     elif compare_versions(current_version, "<", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
@@ -533,7 +543,7 @@ def get_status(current_version, latest_available_version, latest_allowed_version
             "symbol": "+/*",
             "action": "upgrade",
             "status": "latest available",
-            "color": "ok_green"
+            "color": "OK_GREEN"
         }
     # current < available and current < allowed
     elif compare_versions(current_version, "<", latest_available_version) and compare_versions(current_version, "<", latest_allowed_version):
@@ -541,7 +551,7 @@ def get_status(current_version, latest_available_version, latest_allowed_version
             "symbol": "+/.",
             "action": "upgrade",
             "status": "latest allowed",
-            "color": "warning"
+            "color": "WARNING"
         }
     # current > available and available = allowed
     elif compare_versions(current_version, ">", latest_available_version) and compare_versions(latest_available_version, "=", latest_allowed_version):
@@ -549,7 +559,7 @@ def get_status(current_version, latest_available_version, latest_allowed_version
             "symbol": "-/*",
             "action": "downgrade",
             "status": "latest available",
-            "color": "warning"
+            "color": "WARNING"
         }
     # current < available and current > allowed
     elif compare_versions(current_version, ">=", latest_available_version) and compare_versions(current_version, ">", latest_allowed_version):
@@ -557,7 +567,7 @@ def get_status(current_version, latest_available_version, latest_allowed_version
             "symbol": "-/.",
             "action": "downgrade",
             "status": "latest allowed",
-            "color": "warning"
+            "color": "WARNING"
         }
     # current > available and current > allowed
     elif compare_versions(current_version, ">", latest_available_version) and compare_versions(current_version, ">", latest_allowed_version):
@@ -565,14 +575,14 @@ def get_status(current_version, latest_available_version, latest_allowed_version
             "symbol": "-/.",
             "action": "downgrade",
             "status": "latest allowed",
-            "color": "warning"
+            "color": "WARNING"
         }
     else:
         status = {
             "symbol": "~/!",
             "action": "no change",
             "status": "bug",
-            "color": "fail"
+            "color": "FAIL"
         }
 
     return status
@@ -592,7 +602,7 @@ def prefix_status(status, string, color=None, no_color=False):
         index = status_length
 
     position = index - 2
-    line = f'{string[:position]}{"" if no_color else get_color(color)}{status}{"" if no_color else get_color()}{string[position+1:]}'
+    line = f'{string[:position]}{"" if no_color else colors(color)}{status}{"" if no_color else colors()}{string[position+1:]}'
     line = line[len(status) - 1:]
 
     return line
@@ -618,7 +628,7 @@ def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=Fa
         pass
 
     # print the header text
-    print(f'{"" if no_color else get_color("ok_green")}')
+    print(f'{"" if no_color else colors("OK_GREEN")}')
     print("Resource actions and version statuses are indicated with the following symbols:")
     print('\n')
     print("Actions:")
@@ -636,7 +646,7 @@ def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=Fa
     print("For example, '+/*' would indicate the version will be upgraded to the latest version")
     print('\n')
     print("Terraform Mesh will perform the following actions:")
-    print(f'{"" if no_color else get_color()}')
+    print(f'{"" if no_color else colors()}')
 
     # create map for tracking changes
     plan = {
@@ -687,7 +697,7 @@ def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=Fa
                 # iterate through code
                 for line in code:
                     if current_version in line:
-                        print(f'{prefix_status(status["symbol"], line, status["color"], no_color)}{"" if no_color else get_color(status["color"])} // {status["action"]}{"d" if apply else ""} to {status["status"]} = {latest_allowed_version}{"" if no_color else get_color()}')
+                        print(f'{prefix_status(status["symbol"], line, status["color"], no_color)}{"" if no_color else colors(status["color"])} // {status["action"]}{"d" if apply else ""} to {status["status"]} = {latest_allowed_version}{"" if no_color else colors()}')
                     else:
                         print(line)
 
@@ -710,32 +720,32 @@ def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=Fa
                 if verbose:
                     plan["no change"] += 1
                     if request["status_code"] != 200:
-                        print(f'{get_color("fail")}~/x {get_color()}The API call to return versions for {attributes["target"]} "{attributes["name"]}" failed.{get_color("fail")} // {request["status_code"]} {request["reason"]}.{get_color()}\n\n')
+                        print(f'{colors("FAIL")}~/x {colors()}The API call to return versions for {attributes["target"]} "{attributes["name"]}" failed.{colors("FAIL")} // {request["status_code"]} {request["reason"]}.{colors()}\n\n')
                     else:
                         # iterate through code
                         for line in code:
                             if current_version in line:
-                                print(f'{prefix_status(status["symbol"], line, status["color"])}{"" if no_color else get_color(status["color"])} // {status["action"]} - {status["status"]}{"" if no_color else get_color()}')
+                                print(f'{prefix_status(status["symbol"], line, status["color"])}{"" if no_color else colors(status["color"])} // {status["action"]} - {status["status"]}{"" if no_color else colors()}')
                             else:
                                 print(line)
 
                         print("\n")
 
     if apply:
-        print(f'{"" if no_color else get_color("ok_green")}Apply complete!  Resources: {plan["upgrade"]} upgraded, {plan["downgrade"]} downgraded{"" if no_color else get_color()}')
+        print(f'{"" if no_color else colors("OK_GREEN")}Apply complete!  Resources: {plan["upgrade"]} upgraded, {plan["downgrade"]} downgraded{"" if no_color else colors()}')
     elif plan["no change"] > 0:
-        print(f'{"" if no_color else get_color("ok_green")}Plan: {plan["upgrade"]} to upgrade (+), {plan["downgrade"]} to downgrade (-), {plan["no change"]} not to change (~){"" if no_color else get_color()}')
+        print(f'{"" if no_color else colors("OK_GREEN")}Plan: {plan["upgrade"]} to upgrade (+), {plan["downgrade"]} to downgrade (-), {plan["no change"]} not to change (~){"" if no_color else colors()}')
     elif plan["upgrade"] > 0 or plan["downgrade"] > 0:
-        print(f'{"" if no_color else get_color("ok_green")}Plan: {plan["upgrade"]} to upgrade, {plan["downgrade"]} to downgrade{"" if no_color else get_color()}')
+        print(f'{"" if no_color else colors("OK_GREEN")}Plan: {plan["upgrade"]} to upgrade, {plan["downgrade"]} to downgrade{"" if no_color else colors()}')
     else:
-        print(f'{"" if no_color else get_color("ok_green")}No changes.  Dependency versions are up-to-date.{"" if no_color else get_color()}')
+        print(f'{"" if no_color else colors("OK_GREEN")}No changes.  Dependency versions are up-to-date.{"" if no_color else colors()}')
 
     if failures >= 1:
-        print(f'\n{"" if no_color else get_color("fail")}Warning: {failures} resource(s) failed to return a list of available versions.{"" if no_color else get_color()}')
+        print(f'\n{"" if no_color else colors("FAIL")}Warning: {failures} resource(s) failed to return a list of available versions.{"" if no_color else colors()}')
         if apply:
-            print(f'{"" if no_color else get_color("fail")}These resources were not modified during apply.{"" if no_color else get_color()}')
+            print(f'{"" if no_color else colors("FAIL")}These resources were not modified during apply.{"" if no_color else colors()}')
         if not verbose:
-            print(f'{"" if no_color else get_color("fail")}For more details, run the command again with the "--verbose" flag.{"" if no_color else get_color()}')
+            print(f'{"" if no_color else colors("FAIL")}For more details, run the command again with the "--verbose" flag.{"" if no_color else colors()}')
 
     return None
 
