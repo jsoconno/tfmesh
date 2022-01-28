@@ -167,8 +167,21 @@ class TestCore(unittest.TestCase):
         self.assertIn("0.12.0-alpha3", result_with_pre_releases)
         self.assertNotIn("0.12.0-alpha3", result_without_pre_releases)
 
-    def test_get_color(self):
-        self.assertEqual(get_color("ok_blue"), "\033[94m")
+    def test_color(self):
+        """
+        Test that all colors are present and that they match the required pattern.
+        """
+        color_list = ["HEADER", "OK_BLUE", "OK_CYAN", "OK_GREEN", "WARNING", "FAIL", "END", "BOLD", "UNDERLINE"]
+
+        match = 0
+        pattern = r'\033\[[0-9]*m'
+
+        for color in color_list:
+            string = colors(color)
+            if re.match(pattern, string):
+                match += 1
+
+        self.assertEqual(len(color_list), match)
 
     def test_get_status_up_to_date(self):
         """
