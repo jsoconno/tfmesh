@@ -8,11 +8,20 @@ from tfmesh.core import *
 @click.pass_context
 def cli(ctx):
     config = get_config()
+    files_in_current_directory = get_terraform_files()
+    recursive_terraform_folder = search_for_folder("terraform")
+    files_based_on_recursive_strategy = get_terraform_files(terraform_folder=recursive_terraform_folder)
     
-    if config == None:
-        config = {"terraform_files": get_terraform_files()}
-
-    ctx.obj = config
+    if config:
+        ctx.obj = config
+    elif len(files_in_current_directory) > 0:
+        ctx.obj = {"terraform_files": files_in_current_directory}
+    elif len(files_based_on_recursive_strategy) > 0:
+        ctx.obj = {"terraform_files": files_based_on_recursive_strategy}
+    else:
+        ctx.obj = None
+        print(pretty_print([], "No terraform files found."))
+        sys.exit()
 
 @cli.command("init")
 @click.option("--config-file", default=".tfmesh.yaml")

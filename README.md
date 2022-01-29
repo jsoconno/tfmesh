@@ -31,7 +31,13 @@ From there you can start to run `tfmesh` commands.
 
 # Selecting files
 
-By default, Terraform Mesh will search for files that match the pattern `'*.tf`.  This will collect all dependencies in the current directory.  In order to recursively collect versioned resources, you can override this value with `**/*.tf`.
+Terraform Mesh discovers Terraform files through three methods differnet methods:
+
+* **Configuration File** - A configuration file can be created using the `tfmesh init` command.  Supplying the `--terraform-folder` option will inform Terraform Mesh what folder you intend to collect Terraform files from.  This can be a relative path or an absolute path.  You can also recursively collected Terraform files from all sub-directories using this method by supplying the `--terraform-file-pattern` option and using the value `**/*.tf`.
+* **Local Inspection** - If no configuration file is present, Terraform Mesh will attempt to collect all files following the `*.tf` pattern in the current directory.  This default behavior is useful because as a developer this is generally where you are already working on your infrastructure code.
+* **Global Discovery** - If Terraform Mesh can not find any files in the current directory, it will recursively search all sub-directories for a folder named `terraform` and attempt to collect files matching the pattern `*.tf` there.  The downside to this method is that it will return the first found `terraform` folders contents.  If you have multiple `terraform` folders under the parent, you could be targeting the wrong files.
+
+The methods above are evaluated in the precedence order.  For example, local inspection will only happen if there is no configuration file present in the current directory.
 
 # Supported resources
 

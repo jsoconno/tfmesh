@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path, PurePath
 import os
 import sys
 import requests
@@ -828,3 +828,10 @@ def validate_attribute(attribute, choices):
         return False
     else:
         return True
+
+def search_for_folder(name):
+    p = Path(".")
+    for child in p.glob('**/'):
+        folder_name = PurePath(child).name
+        if folder_name == name:
+            return PurePath(child)
