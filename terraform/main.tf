@@ -1,11 +1,11 @@
 module "consul" {
   source = "hashicorp/consul/aws"
-  version = "0.11.0" # ~>0.4.0
+  version = "0.4.5" # ~>0.4.0
 }
 
 module "conventions" {
   source  = "Jsoconno/conventions/azure"
-  version = "6.0.0" # ~>0.4
+  version = "0.5.3" # ~>0.4
   # insert the 1 required variable here
 }
 
