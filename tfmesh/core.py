@@ -563,7 +563,7 @@ def get_status(current_version, latest_available_version, latest_allowed_version
             "color": "WARNING"
         }
     # current < available and current > allowed
-    elif compare_versions(current_version, ">=", latest_available_version) and compare_versions(current_version, ">", latest_allowed_version):
+    elif compare_versions(current_version, ">=", latest_available_version) and compare_versions(latest_available_version, ">", latest_allowed_version):
         status = {
             "symbol": "-/.",
             "action": "downgrade",
@@ -571,7 +571,7 @@ def get_status(current_version, latest_available_version, latest_allowed_version
             "color": "WARNING"
         }
     # current > available and current > allowed
-    elif compare_versions(current_version, ">", latest_available_version) and compare_versions(current_version, ">", latest_allowed_version):
+    elif compare_versions(current_version, "<=", latest_available_version) and compare_versions(current_version, ">", latest_allowed_version):
         status = {
             "symbol": "-/.",
             "action": "downgrade",
