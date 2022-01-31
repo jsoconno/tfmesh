@@ -3,50 +3,61 @@ from pathlib import Path
 import sys
 from tfmesh.core import *
 
+CONTEXT_SETTINGS = dict(auto_envvar_prefix='TFMESH')
+
+def workspace_options(f):
+    f = click.option("--terraform-folder", default="", help="The name of the folder where Terraform files are located (defaults to the current directory).")(f)
+    f = click.option("--terraform-file-pattern", default="*.tf", help="The pattern for matching Terraform files within the directory (defaults to *.tf).")(f)
+    f = click.option("--var", multiple=True, help="One or more variables to be set as environment variables in the format 'some=value'.")(f)
+
+    return f
+
+def get_options(f):
+    f = click.argument("attribute", required=False)(f)
+    f = click.option("--allowed", is_flag=True, help="Returns only allowed versions when used in conjunction with the versions attribute.")(f)
+    f = click.option("--exclude-prerelease", is_flag=True, help="Returns all non-prerelease versions when used in conjunction with the versions attribute.")(f)
+    f = click.option("--top", type=int, default=None, help="Returns the top n number of results when used in conjunction with the versions attribute.")(f)
+
+    return f
+
+def set_options(f):
+    f = click.argument("value")(f)
+    f = click.argument("attribute", required=False)(f)
+    f = click.option("--exclude-prerelease", is_flag=True, help="Ensures the set version is not a pre-release.")(f)
+    f = click.option("--ignore-constraints", is_flag=True, help="Allows the version to be set to a valid version that does not meet the defined constraint.")(f)
+    f = click.option("--what-if", is_flag=True, help="Allows for a dry run to see what would happen before making changes.")(f)
+    f = click.option("--force", is_flag=True, help="Allows the version to be set to any value without validation.")(f)
+
+    return f
+
+def plan_apply_options(f):
+    f = click.option("--target", nargs=2, multiple=True, help="Takes arguments `TYPE` and `NAME` to allow for specific update targets.  For example, `--target provider aws`.  Multiple targets are allowed.")(f)
+    f = click.option("--exclude-prerelease", is_flag=True, help="Ensures the set version is not a pre-release.")(f)
+    f = click.option("--ignore-constraints", is_flag=True, help="Allows the version to be set to a valid version that does not meet the defined constraint.")(f)
+    f = click.option("--no-color", is_flag=True, help="Removes terminal color formatting, primarily for automation purposes.")(f)
+    f = click.option("--verbose", is_flag=True, help="Returns all resources including those with no version changes.")(f)
+    
+    return f
+
 @click.group("cli", invoke_without_command=True)
 @click.version_option()
-@click.pass_context
-def cli(ctx):
-    config = get_config()
-    files_in_current_directory = get_terraform_files()
-    recursive_terraform_folder = search_for_folder("terraform")
-    files_based_on_recursive_strategy = get_terraform_files(terraform_folder=recursive_terraform_folder)
+def cli():
+    """
+    \b
+    A mesh is an interlaced structure. A network of interconnected things. 
+    As a verb, it can mean to be locked together or engaged with another. 
     
-    if config:
-        ctx.obj = config
-    elif len(files_in_current_directory) > 0:
-        ctx.obj = {"terraform_files": files_in_current_directory}
-    elif len(files_based_on_recursive_strategy) > 0:
-        ctx.obj = {"terraform_files": files_based_on_recursive_strategy}
-    else:
-        ctx.obj = None
-        print(pretty_print([], "No terraform files found."))
-        sys.exit()
+    Terraform Mesh CLI (or tfmesh for short) is an open source tool designed 
+    to make Terraform version management simple and effective.
 
-@cli.command("init")
-@click.option("--config-file", default=".tfmesh.yaml")
-@click.option("--terraform-folder", default="")
-@click.option("--terraform-file-pattern", default="*.tf")
-@click.option("--var", multiple=True)
-@click.option("--force", is_flag=True)
-def init(config_file, terraform_folder, terraform_file_pattern, var, force):
+    It allows you to get details about versioned Terraform resources in your
+    configuration, set values for versions and constraints, and automatically
+    make updates to your code so you are always up-to-date.
+    
+    It supports all Terraform native version constraint operators as well
+    as public and private sources for providers and modules.
     """
-    Initializes a file with details about the configuration.
-    """
-    config_file = Path(config_file)
-    if config_file.is_file():
-        if force:
-            set_config(config_file, terraform_folder, terraform_file_pattern, var)
-            click.echo("The configuration was updated.")
-        else:
-            if click.confirm("A configuration file already exists.  Would you like to update it?"):
-                set_config(config_file, terraform_folder, terraform_file_pattern, var)
-                click.echo("The configuration was updated.")
-            else:
-                click.echo("The configuration was not changed.")
-    else:
-        set_config(config_file, terraform_folder, terraform_file_pattern, var)
-        click.echo("The configuration was created.")
+    pass
 
 @cli.group("get")
 def get():
@@ -62,14 +73,10 @@ def set():
     """
     pass
 
-@get.command("terraform")
-@click.argument("attribute", required=False)
-@click.option("--allowed", is_flag=True)
-@click.option("--exclude-prerelease", is_flag=True)
-@click.option("--top", type=int, default=None)
-@click.option("--var", multiple=True)
-@click.pass_obj
-def terraform(config, attribute, allowed, exclude_prerelease, top, var):
+@get.command(context_settings=CONTEXT_SETTINGS)
+@get_options
+@workspace_options
+def terraform(terraform_file_pattern, terraform_folder, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for the Terraform executable.
     """
@@ -78,7 +85,10 @@ def terraform(config, attribute, allowed, exclude_prerelease, top, var):
         sys.exit()
     set_environment_variables(var)
     result = get_dependency_attribute(
-        terraform_files=config["terraform_files"],
+        terraform_files=get_terraform_files(
+            terraform_folder=terraform_folder,
+            file_pattern=terraform_file_pattern
+        ),
         patterns={
             "terraform": [patterns("TERRAFORM")]
         },
@@ -91,29 +101,28 @@ def terraform(config, attribute, allowed, exclude_prerelease, top, var):
     )
     click.echo(result)
 
-@get.command("providers")
-@click.pass_obj
-def providers(config):
+@get.command(context_settings=CONTEXT_SETTINGS)
+@workspace_options
+def providers(terraform_file_pattern, terraform_folder, var):
     """
     Lists all tracked providers.
     """
     resources = get_resources(
-        terraform_files=config["terraform_files"],
+        terraform_files=get_terraform_files(
+            terraform_folder=terraform_folder,
+            file_pattern=terraform_file_pattern
+        ),
         patterns={
             "providers": [patterns("PROVIDER")],
         }
     )
     click.echo(resources)
 
-@get.command("provider")
+@get.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("name", type=str)
-@click.argument("attribute", required=False)
-@click.option("--allowed", is_flag=True)
-@click.option("--exclude-prerelease", is_flag=True)
-@click.option("--top", type=int, default=None)
-@click.option("--var", multiple=True)
-@click.pass_obj
-def provider(config, name, attribute, allowed, exclude_prerelease, top, var):
+@get_options
+@workspace_options
+def provider(terraform_file_pattern, terraform_folder, name, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for provider.
     """
@@ -122,7 +131,10 @@ def provider(config, name, attribute, allowed, exclude_prerelease, top, var):
         sys.exit()
     set_environment_variables(var)
     result = get_dependency_attribute(
-        terraform_files=config["terraform_files"],
+        terraform_files=get_terraform_files(
+            terraform_folder=terraform_folder,
+            file_pattern=terraform_file_pattern
+        ),
         patterns={
             "providers": [patterns("PROVIDER")],
         },
@@ -135,14 +147,17 @@ def provider(config, name, attribute, allowed, exclude_prerelease, top, var):
     )
     click.echo(result)
 
-@get.command("modules")
-@click.pass_obj
-def modules(config):
+@get.command(context_settings=CONTEXT_SETTINGS)
+@workspace_options
+def modules(terraform_file_pattern, terraform_folder, var):
     """
     Lists all tracked modules.
     """
     resources = get_resources(
-        terraform_files=config["terraform_files"],
+        terraform_files=get_terraform_files(
+            terraform_folder=terraform_folder,
+            file_pattern=terraform_file_pattern
+        ),
         patterns={
             "modules": [
                 patterns("MODULE_REGISTRY"),
@@ -152,15 +167,11 @@ def modules(config):
     )
     click.echo(resources)
 
-@get.command("module")
+@get.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("name", type=str)
-@click.argument("attribute", required=False)
-@click.option("--allowed", is_flag=True)
-@click.option("--exclude-prerelease", is_flag=True)
-@click.option("--top", type=int, default=None)
-@click.option("--var", multiple=True)
-@click.pass_obj
-def module(config, name, attribute, allowed, exclude_prerelease, top, var):
+@get_options
+@workspace_options
+def module(terraform_file_pattern, terraform_folder, name, attribute, allowed, exclude_prerelease, top, var):
     """
     Gets a given attribute for module.
     """
@@ -169,7 +180,10 @@ def module(config, name, attribute, allowed, exclude_prerelease, top, var):
         sys.exit()
     set_environment_variables(var)
     result = get_dependency_attribute(
-        terraform_files=config["terraform_files"],
+        terraform_files=get_terraform_files(
+            terraform_folder=terraform_folder,
+            file_pattern=terraform_file_pattern
+        ),
         patterns={
             "modules": [
                 patterns("MODULE_REGISTRY"),
@@ -185,16 +199,10 @@ def module(config, name, attribute, allowed, exclude_prerelease, top, var):
     )
     click.echo(result)
 
-@set.command("terraform")
-@click.argument("attribute", required=False)
-@click.argument("value")
-@click.option("--exclude-prerelease", is_flag=True)
-@click.option("--what-if", is_flag=True)
-@click.option("--ignore-constraints", is_flag=True)
-@click.option("--var", multiple=True)
-@click.option("--force", is_flag=True)
-@click.pass_obj
-def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_constraints, var, force):
+@set.command(context_settings=CONTEXT_SETTINGS)
+@set_options
+@workspace_options
+def terraform(terraform_file_pattern, terraform_folder, attribute, value, exclude_prerelease, what_if, ignore_constraints, var, force):
     """
     Sets the version or constraint for the Terraform executable.
     """
@@ -203,7 +211,10 @@ def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_cons
         sys.exit()
     set_environment_variables(var)
     result = set_dependency_attribute(
-        terraform_files=config["terraform_files"],
+        terraform_files=get_terraform_files(
+            terraform_folder=terraform_folder,
+            file_pattern=terraform_file_pattern
+        ),
         patterns={
             "terraform": [patterns("TERRAFORM")],
         },
@@ -218,17 +229,11 @@ def terraform(config, attribute, value, exclude_prerelease, what_if, ignore_cons
     )
     click.echo(result)
 
-@set.command("provider")
+@set.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("name", type=str)
-@click.argument("attribute", required=False)
-@click.argument("value")
-@click.option("--exclude-prerelease", is_flag=True)
-@click.option("--what-if", is_flag=True)
-@click.option("--ignore-constraints", is_flag=True)
-@click.option("--var", multiple=True)
-@click.option("--force", is_flag=True)
-@click.pass_obj
-def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, var, force):
+@set_options
+@workspace_options
+def provider(terraform_file_pattern, terraform_folder, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, var, force):
     """
     Sets the version or constraint for a given provider.
     """
@@ -237,7 +242,10 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
         sys.exit()
     set_environment_variables(var)
     result = set_dependency_attribute(
-        terraform_files=config["terraform_files"],
+        terraform_files=get_terraform_files(
+            terraform_folder=terraform_folder,
+            file_pattern=terraform_file_pattern
+        ),
         patterns={
             "providers": [patterns("PROVIDER")],
         },
@@ -252,17 +260,11 @@ def provider(config, name, attribute, value, exclude_prerelease, what_if, ignore
     )
     click.echo(result)
 
-@set.command("module")
+@set.command(context_settings=CONTEXT_SETTINGS)
 @click.argument("name", type=str)
-@click.argument("attribute", required=False)
-@click.argument("value")
-@click.option("--exclude-prerelease", is_flag=True)
-@click.option("--what-if", is_flag=True)
-@click.option("--ignore-constraints", is_flag=True)
-@click.option("--var", multiple=True)
-@click.option("--force", is_flag=True)
-@click.pass_obj
-def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, var, force):
+@set_options
+@workspace_options
+def module(terraform_file_pattern, terraform_folder, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, var, force):
     """
     Sets the version or constraint for a given module.
     """
@@ -271,7 +273,10 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
         sys.exit()
     set_environment_variables(var)
     result = set_dependency_attribute(
-        terraform_files=config["terraform_files"],
+        terraform_files=get_terraform_files(
+            terraform_folder=terraform_folder,
+            file_pattern=terraform_file_pattern
+        ),
         patterns={
             "modules": [
                 patterns("MODULE_REGISTRY"),
@@ -289,21 +294,19 @@ def module(config, name, attribute, value, exclude_prerelease, what_if, ignore_c
     )
     click.echo(result)
 
-@cli.command("plan")
-@click.option("--target", nargs=2, multiple=True)
-@click.option("--exclude-prerelease", is_flag=True)
-@click.option("--ignore-constraints", is_flag=True)
-@click.option("--no-color", is_flag=True)
-@click.option("--verbose", is_flag=True)
-@click.option("--var", multiple=True)
-@click.pass_obj
-def plan(config, target, exclude_prerelease, ignore_constraints, no_color, verbose, var):
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@plan_apply_options
+@workspace_options
+def plan(terraform_file_pattern, terraform_folder, target, exclude_prerelease, ignore_constraints, no_color, verbose, var):
     """
     Plans what version changes will be made to the configuration.
     """
     set_environment_variables(var)
     run_plan_apply(
-        terraform_files=config["terraform_files"],
+        terraform_files=get_terraform_files(
+            terraform_folder=terraform_folder,
+            file_pattern=terraform_file_pattern
+        ),
         patterns = {
             "terraform": [patterns("TERRAFORM")],
             "providers": [patterns("PROVIDER")],
@@ -319,22 +322,20 @@ def plan(config, target, exclude_prerelease, ignore_constraints, no_color, verbo
         no_color=no_color
     )
 
-@cli.command("apply")
-@click.option("--target", nargs=2, multiple=True)
-@click.option("--exclude-prerelease", is_flag=True)
-@click.option("--ignore-constraints", is_flag=True)
-@click.option("--no-color", is_flag=True)
-@click.option("--verbose", is_flag=True)
+@cli.command(context_settings=CONTEXT_SETTINGS)
 @click.option("--auto-approve", is_flag=True)
-@click.option("--var", multiple=True)
-@click.pass_obj
-def apply(config, target, exclude_prerelease, ignore_constraints, no_color, verbose, auto_approve, var):
+@plan_apply_options
+@workspace_options
+def apply(terraform_file_pattern, terraform_folder, target, exclude_prerelease, ignore_constraints, no_color, verbose, auto_approve, var):
     """
     Applies configuration version changes.
     """
     set_environment_variables(var)
     run_plan_apply(
-        terraform_files=config["terraform_files"],
+        terraform_files=get_terraform_files(
+            terraform_folder=terraform_folder,
+            file_pattern=terraform_file_pattern
+        ),
         patterns = {
             "terraform": [patterns("TERRAFORM")],
             "providers": [patterns("PROVIDER")],

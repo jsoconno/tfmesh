@@ -31,13 +31,18 @@ From there you can start to run `tfmesh` commands.
 
 # Selecting files
 
-Terraform Mesh discovers Terraform files through three methods differnet methods:
+Terraform Mesh will collect all versioned resources within the current working directory with the file extension `*.tf` by default.  This is similar to the way Terraform works by default as well.
 
-* **Configuration File** - A configuration file can be created using the `tfmesh init` command.  Supplying the `--terraform-folder` option will inform Terraform Mesh what folder you intend to collect Terraform files from.  This can be a relative path or an absolute path.  You can also recursively collected Terraform files from all sub-directories using this method by supplying the `--terraform-file-pattern` option and using the value `**/*.tf`.
-* **Local Inspection** - If no configuration file is present, Terraform Mesh will attempt to collect all files following the `*.tf` pattern in the current directory.  This default behavior is useful because as a developer this is generally where you are already working on your infrastructure code.
-* **Global Discovery** - If Terraform Mesh can not find any files in the current directory, it will recursively search all sub-directories for a folder named `terraform` and attempt to collect files matching the pattern `*.tf` there.  The downside to this method is that it will return the first found `terraform` folders contents.  If you have multiple `terraform` folders under the parent, you could be targeting the wrong files.
+You can change the files selected using the `--terraform-folder` and `--terraform-file-pattern` options.  For example, if you were in the root folder and you wanted to collect all versioned resources from a child folder named `terraform` you could run the following command:
 
-The methods above are evaluated in the precedence order.  For example, local inspection will only happen if there is no configuration file present in the current directory.
+```cmd
+tfmesh get providers --terraform-folder terraform
+```
+
+If you wanted to collect all `.tf` files under the `terraform` folder AND all of its children you could run the following command:
+```cmd
+tfmesh get providers --terraform-folder terraform --terraform-file-pattern "**/*.tf"
+```
 
 # Supported resources
 
@@ -52,7 +57,7 @@ Modules hosted in a git repository work so long as semantic versioning is used (
 
 Further development and testing is planned to support `gitlab` and `bitbucket` git sources and tags.
 
-# Version constrains
+# Version constraints
 
 All version constraints natively available in Terraform are supported.
 
@@ -102,6 +107,14 @@ It is also recommended to make all updates to versions and constraints using the
 
 The tfmesh cli provides a convenient way of working with version updates in Terraform that is suited for local development or CI/CD pipelines.
 
+## Universal options
+
+The following options are available for all commands.
+
+* `--terraform-folder` - the name of the folder where Terraform files are located (defaults to the current directory).
+* `--terraform-file-pattern` - the pattern for matching Terraform files within the directory (defaults to *.tf).
+* `--var` - one or more variables to be added to the configuration file in the format `some=value`.
+
 ## Base command
 
 * `tfmesh` - the root command group.
@@ -110,25 +123,6 @@ The following options are supported:
 
 * `--version` - returns the cli version.
 * `--help` - returns helpful information.
-
-## Init command
-
-The `init` command creates a yaml file that stores basic information about the files that contain Terraform configurations.
-
-* `tfmesh init` - creates a yaml file used for storing configuration file details.
-
-The following options are supported:
-
-* `--config-file` - the name of the configuration file (defaults to ".tfmesh.yaml")
-* `--terraform-folder` - the name of the folder where Terraform files are located (defaults to the current directory).
-* `--terraform-file-pattern` - the pattern for matching Terraform files within the directory (defaults to *.tf).
-* `--var` - one or more variables to be added to the configuration file.
-* `--force` - allows for non-interactive reset of the configuration file for automation purposes.
-
-Example:
-```cmd
-tfmesh init --terraform-folder terraform --force
-```
 
 ## Get command
 
@@ -161,12 +155,13 @@ The following options are supported:
 * `--allowed` - returns only allowed versions when used in conjunction with the versions attribute.
 * `--exclude-prerelease` - returns all non-prerelease versions when used in conjunction with the versions attribute.
 * `--top` - returns the top n number of results when used in conjunction with the versions attribute.
-* `--var` - one or more variables to set on the command line.
 
 Example:
 ```cmd
 tfmesh get module s3 versions --allowed --exclude-prerelease --top 10
 ```
+
+Don't worry if you forget the available attributes while using the tool on the command line.  Terraform Mesh will help you out with hints if you misspell or fail to provide an attribute.
 
 ## Set command
 
@@ -186,7 +181,6 @@ The following options are supported:
 * `--exclude-prerelease` - ensures the set version is not a pre-release.
 * `--what-if` - allows for a dry run to see what would happen before making changes.
 * `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
-* `--var` - one or more variables to set on the command line.
 * `--force` - allows the version to be set to any value without validation.
 
 Example:
@@ -205,9 +199,8 @@ The following options are supported:
 * `--target TYPE NAME` - takes arguments `TYPE` and `NAME` to allow for specific update targets.  For example, `--target provider aws`.  Multiple targets are allowed.
 * `--exclude-prerelease` - ensures the set version is not a pre-release.
 * `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
-* `--no-color` - removes terminal color formatting.
-* `--verbose` - returns all resources as part of the plan including those with no version changes.
-* `--var` - one or more variables to set on the command line.
+* `--no-color` - removes terminal color formatting, primarily for automation purposes.
+* `--verbose` - returns all resources including those with no version changes.
 
 Example:
 ```cmd
@@ -225,10 +218,9 @@ The following options are supported:
 * `--target TYPE NAME` - takes arguments `TYPE` and `NAME` to allow for specific update targets.  For example, `--target provider aws`.  Multiple targets are allowed.
 * `--exclude-prerelease` - ensures the set version is not a pre-release.
 * `--ignore-constraints` - allows the version to be set to a valid version that does not meet the defined constraint.
-* `--no-color` - removes terminal color formatting.
-* `--verbose` - returns all resources as part of the apply including those with no version changes.
+* `--no-color` - removes terminal color formatting, primarily for automation purposes.
+* `--verbose` - returns all resources including those with no version changes.
 * `--auto-approve` - approves upgrades without prompting for user input.
-* `--var` - one or more variables to set on the command line.
 
 Example:
 ```cmd
@@ -272,7 +264,7 @@ x: no suitable version
 !: bug
 
 
-Actions and and versions are used together separated by a forward slash (/) to indicate changes.
+Actions and and versions are used together separated by a forward slash (`/`) to indicate changes.
 For example, '+/*' would indicate the version will be upgraded to the latest version
 
 
@@ -292,17 +284,27 @@ Plan: 1 to upgrade, 1 to downgrade
 ```
 # Setting variables
 
-Variables allow users to pass data to Terraform Mesh, primarily for authenticating with private repositories.  If the same variable is assigned multiple values, Terraform Mesh uses the last value it finds, overriding any previous values.
+Variables allow users to pass data to Terraform Mesh, primarily for authenticating with private repositories.  If the same variable is assigned multiple values, Terraform Mesh uses the last value it finds, overriding any previous values.  Variables set on the command line will always take precedence over variables set directly as environment variables.
 
-Terraform Mesh supports three methods for setting variables:
+Setting variables on the command line:
 
-* **The command line** - variables can be passed on the command line for all commands using the `--var` flag.  All variables must be in the format `--var="name=value"`.  With this method, variables need to be passed every time they are required for a command.  In other words, they are not persisted.
-* **The configuration file** - variables can also be saved in the configuration file using the same `--var` syntax above in combination with the `init` command.  This allows variables to be persistent across all commands making things simpler when working locally.  Be warned that secret values will be in plain text in the configuration file.  It is recommended to make sure to add this file to `.gitignore`.
-* **The terminal** - any variable can be set in the terminal as an environment variable.  Simply append `TFMESH_` to any variable you want to be able to reference in your session.  For example `export TFMESH_GITHUB_PAT=somethingprivate`.
+```cmd
+tfmesh get module s3 versions --var="github_token=xxxxxxxxxxxxxxxx"
+```
 
-Terraform Mesh will always load all variable sources in with the earlier sources in this list taking precedence over later ones.  Valid variable names only use alphanumerics and underscores.  Any non-alphanumeric characters will be removed and dashes converted to underscores when the variable is processed.
+Setting variables directly as environment variables:
+```cmd
+export TFMESH_GITHUB_TOKEN=xxxxxxxxxxxxxxxx
+```
 
-For example, setting a variable like `tfmesh get module some_module versions -var="som3-v@r=this"` would be converted on the backend to `TFMESH_SOM_VR=this` because the `3` at `@` symbol would be stripped and the dash (`-`) converted to an underscore (`_`).
+Valid variable names only use alphanumerics and underscores.  Any non-alphanumeric characters will be removed and dashes converted to underscores when the variable is processed.
+
+For example, setting a variable like `--var="som3-v@r=this"` would be converted on the backend to `TFMESH_SOM_VR=this` because:
+* `TFMESH_` would be prefixed
+* The `3` at `@` symbol would be stripped and
+* The dash (`-`) converted to an underscore (`_`).
+
+This behavior is primarily to ensure that valid environment variables are set.  By default, all options can be set on the command line by exporting an environment variable that is prefixed with `TFMESH_`.
 
 # Authentication
 
@@ -311,7 +313,7 @@ The primary way that Terraform Mesh interacts with other private git repositorie
 Supported private git repositories:
 * GitHub - use the `github_token` variable or `TFMESH_GITHUB_TOKEN` environment variable.
 
-To get versions from a private repo, the appropriate token variable must be set.  This can be done on the command line at runtime using the `--var` flag in combination with the `get`, `plan`, and `apply` commands.  This is the best option if you are targeting multiple private repos in your configuration.  Variables can also be set in your configuration using the `--var` flag in combination with `tfmesh init`.  The final way is to directly set the environment variable in the terminal using `export TFMESH_SOME_TOKEN`.
+To manage resource versions from a private repo, the appropriate token variable must be set.  This can be done on the command line at runtime using the `--var` flag in combination with any command or by setting the environment variable directly on the terminal as described in the setting variables section of the docs.
 
 # Handling errors
 
@@ -319,16 +321,7 @@ Support was added to allow users to see when a resource that is located in a pri
 
 Below are the common errors and what they most likely mean.
 
-**404 Not Found** - The authentication token (PAT) for the target repository is not set.  This can be set on the command line or added to the configuration file using the `--var` flag.  
+* **404 Not Found** - The authentication token (PAT) for the target repository is not set.
+* **401 Not Unauthorized** - The authentication token (PAT) for the target repository set to in incorrect value or the token is expired.
 
-Note that if you add a token to the configuration file it will be in plain text.  Please protect this information and be sure to add the file to your `.gitignore`.  
-
-Examples:
-```cmd
-tfmesh init --var="github_pat=somethingprivate"
-```
-```cmd
-tfmesh plan --var="github_pat=somethingprivate"
-```
-
-**401 Unauthorized** - An authentication token (PAT) for the target repository was set, but is either invalid or expired.
+For more information on setting variables, see the setting variables section of the docs.

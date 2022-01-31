@@ -26,7 +26,6 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install --editable .
-          tfmesh init --terraform-folder terraform
           output=$(tfmesh apply --no-color)
           output="${output//'%'/'%25'}"
           output="${output//$'\n'/'%0A'}"
@@ -34,6 +33,7 @@ jobs:
           echo "::set-output name=changelog::$output"
         env:
           TFMESH_GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          TFMESH_TERRAFORM_FOLDER: terraform
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
