@@ -5,13 +5,11 @@ import requests
 import json
 import re
 import operator
-import yaml
-from tabulate import tabulate
 from collections import defaultdict
 
 def colors(color="END"):
     """
-    Gets colors codes used for outputting text with color to the CLI.
+    A standard set of colors used for printing to command line.
     """
     colors = {
         "HEADER": "\033[95m",
@@ -29,6 +27,7 @@ def colors(color="END"):
 
 def options(option):
     """
+    A standard set of attribute options.
     """
     options = {
         "GET": ["target", "filepath", "filename", "code", "name", "source", "version", "versions", "constraint", "lower_constraint_operator", "lower_constraint", "upper_constraint_operator", "upper_constraint"],
@@ -39,6 +38,7 @@ def options(option):
 
 def patterns(pattern):
     """
+    A standard set of regex patterns.
     """
     patterns = {
         "TERRAFORM": r'(((terraform)) *{[^}]*?required_version *= *\"(\S*)\" *#? *(([=!><~(.*)]*) *([0-9\.]*) *,* *([=!><~(.*)]*) *([0-9\.]*))[\s\S]*?)',
@@ -62,33 +62,9 @@ def get_terraform_files(terraform_folder=None, file_pattern='*.tf'):
     
     return file_list
 
-def set_config(config_file=".tfmesh.yaml", terraform_folder="", terraform_file_pattern="*.tf", var=[]):
-    """
-    """
-    variables = {}
-    for v in var:
-        name, value = re.findall(r'(\S*) *= *(\S*)', v)[0]
-        name = re.sub(r'[^a-zA-Z0-9_]', "", name)
-        variables[name] = value
-
-    with open(config_file, 'w') as config_file:
-        config = {
-            "terraform_folder": terraform_folder,
-            "terraform_file_pattern": terraform_file_pattern,
-            "terraform_files": get_terraform_files(terraform_folder, terraform_file_pattern),
-            "variables": variables
-        }
-        yaml.dump(config, config_file, default_flow_style=False)
-
-def get_config(config_file=".tfmesh.yaml"):
-    try:
-        config = yaml.safe_load(open(config_file))
-    except:
-        config = None
-    return config
-
 def get_dependency_attributes(terraform_files, patterns):
     """
+    Returns all attributes for a given resource.
     """
     dependencies = defaultdict(dict)
 
@@ -122,6 +98,7 @@ def get_dependency_attributes(terraform_files, patterns):
 
 def get_dependency_attribute(terraform_files, patterns, resource_type, name, attribute, allowed, exclude_prerelease, top):
     """
+    Gets an attribute for a given resource.
     """
     dependencies = get_dependency_attributes(
         terraform_files=terraform_files,
@@ -158,6 +135,9 @@ def get_dependency_attribute(terraform_files, patterns, resource_type, name, att
     return result
 
 def set_dependency_attribute(terraform_files, patterns, resource_type, name, attribute, value, exclude_prerelease, what_if, ignore_constraints, force):
+    """
+    Updates an attribute for a given resource.
+    """
     dependencies = get_dependency_attributes(
         terraform_files=terraform_files,
         patterns=patterns
@@ -220,6 +200,7 @@ def set_dependency_attribute(terraform_files, patterns, resource_type, name, att
 
 def get_resources(terraform_files, patterns):
     """
+    Returns a nicely formatted string showing a list of available resources.
     """
     resource_list = []
 
@@ -435,6 +416,7 @@ def sort_versions(versions, reverse=True):
 
 def pretty_print(ugly_list, title=None, top=None, item_prefix=" - "):
     """
+    Implements logic to make output to CLI more clean and consistent.
     """
     pretty_print = "\n"
 
@@ -589,6 +571,9 @@ def get_status(current_version, latest_available_version, latest_allowed_version
     return status
 
 def prefix_status(status, string, color=None, no_color=False):
+    """
+    Makes plan and apply text output to terminal more consistent.
+    """
     index = 0
     for char in string:
         if re.match(r'[\S]', char):
@@ -610,7 +595,7 @@ def prefix_status(status, string, color=None, no_color=False):
 
 def run_plan_apply(terraform_files, patterns, target=[], apply=False, verbose=False, exclude_prerelease=False, ignore_constraints=False, no_color=False):
     """
-    
+    Implements logic to plan and apply updates to resource versions.
     """
     # get resource attributes
     resources = get_dependency_attributes(terraform_files, patterns)
@@ -790,26 +775,17 @@ def pretty_code(code, spaces=4, indent_symbols = ("{", "[", "("), outdent_symbol
 
     return "\n".join(new_code)
 
-def set_environment_variables(var, config_file=".tfmesh.yaml"):
+def set_environment_variables(var):
     """
     Sets environment variables based on config and command line variables.
     """
-    # load configuration file variables
-    try:
-        config_variables = yaml.safe_load(open(config_file))["variables"]
-    except:
-        config_variables = {}
-
     # collect and clean command line variables
-    command_line_variables = {}
+    variables = {}
     for v in var:
         name, value = re.findall(r'(\S*) *= *(\S*)', v)[0]
         name = name.replace("-", "_")
         name = re.sub(r'[^a-zA-Z0-9_]', "", name)
-        command_line_variables[name] = value
-
-    # merge config variables with command line variables
-    variables = dict(list(config_variables.items()) + list(command_line_variables.items()))
+        variables[name] = value
 
     # set environment variables
     for name, value in variables.items():
@@ -820,6 +796,9 @@ def set_environment_variables(var, config_file=".tfmesh.yaml"):
     return variables
 
 def validate_attribute(attribute, choices):
+    """
+    Compare attribute to valid choices and return a response.
+    """
     if attribute == None:
         print(pretty_print(choices, "Select on of the following:"))
         return False
@@ -829,9 +808,9 @@ def validate_attribute(attribute, choices):
     else:
         return True
 
-def search_for_folder(name):
-    p = Path(".")
-    for child in p.glob('**/'):
-        folder_name = PurePath(child).name
-        if folder_name == name:
-            return PurePath(child)
+# def search_for_folder(name):
+#     p = Path(".")
+#     for child in p.glob('**/'):
+#         folder_name = PurePath(child).name
+#         if folder_name == name:
+#             return PurePath(child)
