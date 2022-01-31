@@ -100,37 +100,55 @@ def get_dependency_attribute(terraform_files, patterns, resource_type, name, att
     """
     Gets an attribute for a given resource.
     """
-    dependencies = get_dependency_attributes(
-        terraform_files=terraform_files,
-        patterns=patterns
-    )
-    if attribute == "versions":
-        request = get_available_versions(
-            target=dependencies[resource_type][name]["target"],
-            source=dependencies[resource_type][name]["source"],
-            exclude_pre_release=exclude_prerelease
+    if terraform_files == []:
+        result = pretty_print(
+            title=f"No Terraform files found.  Try:",
+            options=["Changing the current working directory to a directory with Terraform (.tf) files.", "Selecting a different folder with the --terraform-folder option or TFMESH_TERRAFORM_FOLDER environment variable.", "Changing the file pattern with the --terraform-file-pattern option or TFMESH_TERRAFORM_FILE_PATTERN environment variable."]
         )
-        available_versions = sort_versions(request["versions"])
-        allowed_versions = sort_versions(
-            get_allowed_versions(
-                available_versions,
-                dependencies[resource_type][name]["lower_constraint"],
-                dependencies[resource_type][name]["lower_constraint_operator"],
-                dependencies[resource_type][name]["upper_constraint"],
-                dependencies[resource_type][name]["upper_constraint_operator"],
-            )
-        )
-        if request["status_code"] != 200:
-            result = pretty_print(f'The API call to return versions for {name} failed. {colors("FAIL")}{request["status_code"]} {request["reason"]}{colors()}.')
-        elif allowed:
-            result = pretty_print(allowed_versions, top=top)
-        else:
-            result = pretty_print(available_versions, top=top)
     else:
-        if attribute == "code":
-            result = pretty_print(pretty_code(dependencies[resource_type][name][attribute]))
+        dependencies = get_dependency_attributes(
+            terraform_files=terraform_files,
+            patterns=patterns
+        )
+        if attribute == "versions":
+            request = get_available_versions(
+                target=dependencies[resource_type][name]["target"],
+                source=dependencies[resource_type][name]["source"],
+                exclude_pre_release=exclude_prerelease
+            )
+            available_versions = sort_versions(request["versions"])
+            allowed_versions = sort_versions(
+                get_allowed_versions(
+                    available_versions,
+                    dependencies[resource_type][name]["lower_constraint"],
+                    dependencies[resource_type][name]["lower_constraint_operator"],
+                    dependencies[resource_type][name]["upper_constraint"],
+                    dependencies[resource_type][name]["upper_constraint_operator"],
+                )
+            )
+            if request["status_code"] != 200:
+                result = pretty_print(
+                    title=f'The API call to return versions for {name} failed. {colors("FAIL")}{request["status_code"]} {request["reason"]}{colors()}.'
+                )
+            elif allowed:
+                result = pretty_print(
+                    options=allowed_versions,
+                    top=top
+                )
+            else:
+                result = pretty_print(
+                    options=available_versions,
+                    top=top
+                )
         else:
-            result = pretty_print(dependencies[resource_type][name][attribute])
+            if attribute == "code":
+                result = pretty_print(
+                    title=pretty_code(dependencies[resource_type][name][attribute])
+                )
+            else:
+                result = pretty_print(
+                    title=dependencies[resource_type][name][attribute]
+                )
 
     return result
 
@@ -138,64 +156,85 @@ def set_dependency_attribute(terraform_files, patterns, resource_type, name, att
     """
     Updates an attribute for a given resource.
     """
-    dependencies = get_dependency_attributes(
-        terraform_files=terraform_files,
-        patterns=patterns
-    )
-    if attribute == "version":
-        request = get_available_versions(
-            target=dependencies[resource_type][name]["target"],
-            source=dependencies[resource_type][name]["source"],
-            exclude_pre_release=exclude_prerelease
+    if terraform_files == []:
+        result = pretty_print(
+            title=f"No Terraform files found.  Try:",
+            options=["Changing the current working directory to a directory with Terraform (.tf) files.", "Selecting a different folder with the --terraform-folder option or TFMESH_TERRAFORM_FOLDER environment variable.", "Changing the file pattern with the --terraform-file-pattern option or TFMESH_TERRAFORM_FILE_PATTERN environment variable."]
         )
-        available_versions = sort_versions(request["versions"])
-        allowed_versions = sort_versions(
-            get_allowed_versions(
-                available_versions,
-                dependencies[resource_type][name]["lower_constraint"],
-                dependencies[resource_type][name]["lower_constraint_operator"],
-                dependencies[resource_type][name]["upper_constraint"],
-                dependencies[resource_type][name]["upper_constraint_operator"],
+    else:
+        dependencies = get_dependency_attributes(
+            terraform_files=terraform_files,
+            patterns=patterns
+        )
+        if attribute == "version":
+            request = get_available_versions(
+                target=dependencies[resource_type][name]["target"],
+                source=dependencies[resource_type][name]["source"],
+                exclude_pre_release=exclude_prerelease
             )
-        )
-        if ignore_constraints:
-            versions = available_versions
+            available_versions = sort_versions(request["versions"])
+            allowed_versions = sort_versions(
+                get_allowed_versions(
+                    available_versions,
+                    dependencies[resource_type][name]["lower_constraint"],
+                    dependencies[resource_type][name]["lower_constraint_operator"],
+                    dependencies[resource_type][name]["upper_constraint"],
+                    dependencies[resource_type][name]["upper_constraint_operator"],
+                )
+            )
+            if ignore_constraints:
+                versions = available_versions
+            else:
+                versions = allowed_versions
         else:
-            versions = allowed_versions
-    else:
-        versions = []
+            versions = []
 
-    current_value = dependencies[resource_type][name][attribute]
-    new_value = value
+        current_value = dependencies[resource_type][name][attribute]
+        new_value = value
 
-    if current_value == new_value:
-        result = pretty_print(f'The {attribute} is already set to "{new_value}".')
-    elif what_if:
-        result = pretty_print(f'The {attribute} was would have changed from "{current_value}" to "{new_value}".')
-    elif attribute == "version" and request["status_code"] != 200 and force:
-        update_version(
-            filepath=dependencies[resource_type][name]["filepath"],
-            code=dependencies[resource_type][name]["code"],
-            attribute=attribute,
-            value=value
-        )
-        result = pretty_print(f'The {attribute} was changed from "{current_value}" to "{new_value}" without validation.')
-    elif attribute == "version" and request["status_code"] != 200:
-        result = pretty_print(f'The API call to return versions for {name} failed. {colors("FAIL")}{request["status_code"]} {request["reason"]}{colors()}')
-    elif force or new_value in versions or attribute == "constraint":
-        update_version(
-            filepath=dependencies[resource_type][name]["filepath"],
-            code=dependencies[resource_type][name]["code"],
-            attribute=attribute,
-            value=value
-        )
-        result = pretty_print(f'The {attribute} was changed from "{current_value}" to "{new_value}".')
-    elif versions == []:
-        result = pretty_print(f'There is no version available that meets the constraint "{dependencies[resource_type][name]["constraint"]}".')
-    else:
-        title = f'"{value}" is not an acceptable version.  Select from one of:'
-        result = pretty_print(versions, title=title)
-    
+        if current_value == new_value:
+            result = pretty_print(
+                title=f'The {attribute} is already set to "{new_value}".'
+            )
+        elif what_if:
+            result = pretty_print(
+                title=f'The {attribute} was would have changed from "{current_value}" to "{new_value}".'
+            )
+        elif attribute == "version" and request["status_code"] != 200 and force:
+            update_version(
+                filepath=dependencies[resource_type][name]["filepath"],
+                code=dependencies[resource_type][name]["code"],
+                attribute=attribute,
+                value=value
+            )
+            result = pretty_print(
+                title=f'The {attribute} was changed from "{current_value}" to "{new_value}" without validation.'
+            )
+        elif attribute == "version" and request["status_code"] != 200:
+            result = pretty_print(
+                title=f'The API call to return versions for {name} failed. {colors("FAIL")}{request["status_code"]} {request["reason"]}{colors()}'
+            )
+        elif force or new_value in versions or attribute == "constraint":
+            update_version(
+                filepath=dependencies[resource_type][name]["filepath"],
+                code=dependencies[resource_type][name]["code"],
+                attribute=attribute,
+                value=value
+            )
+            result = pretty_print(
+                title=f'The {attribute} was changed from "{current_value}" to "{new_value}".'
+            )
+        elif versions == []:
+            result = pretty_print(
+                title=f'There is no version available that meets the constraint "{dependencies[resource_type][name]["constraint"]}".'
+            )
+        else:
+            title = f'"{value}" is not an acceptable version.  Select from one of:'
+            result = pretty_print(
+                title=title,
+                options=versions
+            )
+        
     return result
 
 def get_resources(terraform_files, patterns):
@@ -212,7 +251,9 @@ def get_resources(terraform_files, patterns):
         for resource in resources:
             resource_list.append(resource)
 
-    return pretty_print(resource_list)
+    return pretty_print(
+        options=resource_list
+    )
 
 def get_semantic_version(version):
     """
@@ -414,16 +455,16 @@ def sort_versions(versions, reverse=True):
 
     return versions
 
-def pretty_print(ugly_list, title=None, top=None, item_prefix=" - "):
+def pretty_print(title=None, options=[], top=None, item_prefix=" - "):
     """
     Implements logic to make output to CLI more clean and consistent.
     """
     pretty_print = "\n"
 
-    if isinstance(ugly_list, str):
-        ugly_list = [ugly_list]
+    if isinstance(options, str):
+        options = [options]
 
-    if len(ugly_list) > 1:
+    if len(options) > 1:
         item_prefix = item_prefix
     else:
         item_prefix = ""
@@ -432,10 +473,10 @@ def pretty_print(ugly_list, title=None, top=None, item_prefix=" - "):
         pretty_print += f'{title}\n'
 
     if top:
-        ugly_list = ugly_list[:top]
+        options = options[:top]
 
-    for ugly_item in ugly_list:
-        pretty_print += f'{item_prefix}{ugly_item}\n'
+    for option in options:
+        pretty_print += f'{item_prefix}{option}\n'
 
     return pretty_print
 
@@ -800,10 +841,16 @@ def validate_attribute(attribute, choices):
     Compare attribute to valid choices and return a response.
     """
     if attribute == None:
-        print(pretty_print(choices, "Select on of the following:"))
+        print(pretty_print(
+            title="Select on of the following:", 
+            options=choices)
+        )
         return False
     elif attribute not in choices:
-        print(pretty_print(choices, f'"{attribute}" is not a valid attribute.  Select on of the following:'))
+        print(pretty_print(
+            title=f'"{attribute}" is not a valid attribute.  Select on of the following:',
+            options=choices)
+        )
         return False
     else:
         return True
