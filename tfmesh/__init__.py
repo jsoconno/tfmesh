@@ -6,45 +6,57 @@ from tfmesh.core import *
 CONTEXT_SETTINGS = dict(auto_envvar_prefix='TFMESH')
 
 def workspace_options(f):
-    f = click.option("--terraform-folder", default="")(f)
-    f = click.option("--terraform-file-pattern", default="*.tf")(f)
+    f = click.option("--terraform-folder", default="", help="The name of the folder where Terraform files are located (defaults to the current directory).")(f)
+    f = click.option("--terraform-file-pattern", default="*.tf", help="The pattern for matching Terraform files within the directory (defaults to *.tf).")(f)
+    f = click.option("--var", multiple=True, help="One or more variables to be set as environment variables in the format 'some=value'.")(f)
 
     return f
 
 def get_options(f):
     f = click.argument("attribute", required=False)(f)
-    f = click.option("--allowed", is_flag=True)(f)
-    f = click.option("--exclude-prerelease", is_flag=True)(f)
-    f = click.option("--top", type=int, default=None)(f)
-    f = click.option("--var", multiple=True)(f)
-    # f = click.option("--github_token", default=None)(f)
+    f = click.option("--allowed", is_flag=True, help="Returns only allowed versions when used in conjunction with the versions attribute.")(f)
+    f = click.option("--exclude-prerelease", is_flag=True, help="Returns all non-prerelease versions when used in conjunction with the versions attribute.")(f)
+    f = click.option("--top", type=int, default=None, help="Returns the top n number of results when used in conjunction with the versions attribute.")(f)
 
     return f
 
 def set_options(f):
     f = click.argument("value")(f)
     f = click.argument("attribute", required=False)(f)
-    f = click.option("--exclude-prerelease", is_flag=True)(f)
-    f = click.option("--what-if", is_flag=True)(f)
-    f = click.option("--ignore-constraints", is_flag=True)(f)
-    f = click.option("--var", multiple=True)(f)
-    f = click.option("--force", is_flag=True)(f)
+    f = click.option("--exclude-prerelease", is_flag=True, help="Ensures the set version is not a pre-release.")(f)
+    f = click.option("--ignore-constraints", is_flag=True, help="Allows the version to be set to a valid version that does not meet the defined constraint.")(f)
+    f = click.option("--what-if", is_flag=True, help="Allows for a dry run to see what would happen before making changes.")(f)
+    f = click.option("--force", is_flag=True, help="Allows the version to be set to any value without validation.")(f)
 
     return f
 
 def plan_apply_options(f):
-    f = click.option("--target", nargs=2, multiple=True)(f)
-    f = click.option("--exclude-prerelease", is_flag=True)(f)
-    f = click.option("--ignore-constraints", is_flag=True)(f)
-    f = click.option("--no-color", is_flag=True)(f)
-    f = click.option("--verbose", is_flag=True)(f)
-    f = click.option("--var", multiple=True)(f)
+    f = click.option("--target", nargs=2, multiple=True, help="Takes arguments `TYPE` and `NAME` to allow for specific update targets.  For example, `--target provider aws`.  Multiple targets are allowed.")(f)
+    f = click.option("--exclude-prerelease", is_flag=True, help="Ensures the set version is not a pre-release.")(f)
+    f = click.option("--ignore-constraints", is_flag=True, help="Allows the version to be set to a valid version that does not meet the defined constraint.")(f)
+    f = click.option("--no-color", is_flag=True, help="Removes terminal color formatting, primarily for automation purposes.")(f)
+    f = click.option("--verbose", is_flag=True, help="Returns all resources including those with no version changes.")(f)
     
     return f
 
 @click.group("cli", invoke_without_command=True)
 @click.version_option()
 def cli():
+    """
+    \b
+    A mesh is an interlaced structure. A network of interconnected things. 
+    As a verb, it can mean to be locked together or engaged with another. 
+    
+    Terraform Mesh CLI (or tfmesh for short) is an open source tool designed 
+    to make Terraform version management simple and effective.
+
+    It allows you to get details about versioned Terraform resources in your
+    configuration, set values for versions and constraints, and automatically
+    make updates to your code so you are always up-to-date.
+    
+    It supports all Terraform native version constraint operators as well
+    as public and private sources for providers and modules.
+    """
     pass
 
 @cli.group("get")
@@ -60,13 +72,6 @@ def set():
     Sets attributes for a given resource.
     """
     pass
-
-@cli.command(context_settings=CONTEXT_SETTINGS)
-@workspace_options
-@get_options
-def test(terraform_file_pattern, terraform_folder, attribute, allowed, exclude_prerelease, top, github_token):
-    click.echo(terraform_file_pattern)
-    click.echo(attribute)
 
 @get.command(context_settings=CONTEXT_SETTINGS)
 @get_options
@@ -98,7 +103,7 @@ def terraform(terraform_file_pattern, terraform_folder, attribute, allowed, excl
 
 @get.command(context_settings=CONTEXT_SETTINGS)
 @workspace_options
-def providers(terraform_file_pattern, terraform_folder):
+def providers(terraform_file_pattern, terraform_folder, var):
     """
     Lists all tracked providers.
     """
@@ -144,7 +149,7 @@ def provider(terraform_file_pattern, terraform_folder, name, attribute, allowed,
 
 @get.command(context_settings=CONTEXT_SETTINGS)
 @workspace_options
-def modules(terraform_file_pattern, terraform_folder):
+def modules(terraform_file_pattern, terraform_folder, var):
     """
     Lists all tracked modules.
     """
