@@ -241,19 +241,27 @@ def get_resources(terraform_files, patterns):
     """
     Returns a nicely formatted string showing a list of available resources.
     """
-    resource_list = []
+    if terraform_files == []:
+        result = pretty_print(
+            title=f"No Terraform files found.  Try:",
+            options=["Changing the current working directory to a directory with Terraform (.tf) files.", "Selecting a different folder with the --terraform-folder option or TFMESH_TERRAFORM_FOLDER environment variable.", "Changing the file pattern with the --terraform-file-pattern option or TFMESH_TERRAFORM_FILE_PATTERN environment variable."]
+        )
+    else:
+        resource_list = []
 
-    dependencies = get_dependency_attributes(
-        terraform_files=terraform_files,
-        patterns=patterns
-    )
-    for resource_type, resources in dependencies.items():
-        for resource in resources:
-            resource_list.append(resource)
+        dependencies = get_dependency_attributes(
+            terraform_files=terraform_files,
+            patterns=patterns
+        )
+        for resource_type, resources in dependencies.items():
+            for resource in resources:
+                resource_list.append(resource)
+        
+        result = pretty_print(
+            options=resource_list
+        )
 
-    return pretty_print(
-        options=resource_list
-    )
+    return result
 
 def get_semantic_version(version):
     """
