@@ -5,7 +5,7 @@ module "consul" {
 
 module "conventions" {
   source  = "Jsoconno/conventions/azure"
-  version = "0.5.3" # ~>0.4
+  version = "6.0.0" # >=0.5.0
   # insert the 1 required variable here
 }
 
