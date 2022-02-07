@@ -20,7 +20,7 @@ class TestCore(unittest.TestCase):
         Test that semantic version components are returned as a dictionary
         """
         actual = get_semantic_version(version="v1.2.3")
-        expected = (1, 2, 3)
+        expected = (1, 2, 3, 1000000000000000, 3)
 
         self.assertEqual(actual, expected)
 
@@ -64,10 +64,11 @@ class TestCore(unittest.TestCase):
         """
         Test that version comparisons work correctly.
         """
-        a = (1, 5, 0)
-        b = (1, 5, 10)
-        c = (1, 4)
-        d = (1,)
+        # (major, minor, patch, pre-release=1000000000000000, version_length=N)
+        a = (1, 5, 0, 1000000000000000, 3)
+        b = (1, 5, 10, 1000000000000000, 3)
+        c = (1, 4, 0, 1000000000000000, 2)
+        d = (1, 0, 0, 1000000000000000, 1)
 
         result = (
             compare_versions(a, "=", a) and

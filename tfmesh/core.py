@@ -198,7 +198,7 @@ def set_dependency_attribute(terraform_files, patterns, resource_type, name, att
             )
         elif what_if:
             result = pretty_print(
-                title=f'The {attribute} was would have changed from "{current_value}" to "{new_value}".'
+                title=f'The {attribute} would have changed from "{current_value}" to "{new_value}".'
             )
         elif attribute == "version" and request["status_code"] != 200 and force:
             update_version(
@@ -272,6 +272,15 @@ def get_semantic_version(version):
     try:
         version = re.findall(regex_pattern, version)[0]
         version = tuple([int(component) for component in version if component != ''])
+
+        # This block is used to standardize all version tuples so that
+        # pre-releases are not prioritized above regular releases.
+        version_length = len(version)
+        missing_version_components = 4-version_length
+
+        if 4-len(version) > 0:
+            # Adding the version length at the end is used for pessimistic constraint operator logic.
+            version = version + (0,)*(missing_version_components-1) + (1000000000000000,) + (version_length,)
     except:
         version = None
 
@@ -424,9 +433,10 @@ def compare_versions(a, op, b):
 
     if a and b:
         if op == "~>":
-            if len(b) == 2:
+            version_length = b[-1]
+            if version_length == 2:
                 result = ops[">="](a, b) and ops["<"](a, (b[0]+1, 0, 0))
-            elif len(b) == 3:
+            elif version_length == 3:
                 result = ops[">="](a, b) and ops["<"](a, (b[0], b[1]+1, 0))
             else:
                 raise ValueError("When using a pessimistic version constraint, the version value must only have two or three parts (e.g. 1.0, 1.1.0).")
