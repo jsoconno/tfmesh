@@ -516,7 +516,7 @@ def update_version(filepath, code, attribute, value):
     """
     #TODO: Rename this function
     patterns = {
-        "version": r'(=|")([a-zA-Z]?[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+)?)(")',
+        "version": r'(=|")([=!><~]* *[a-zA-Z]?[0-9]+\.[0-9]+\.*[0-9]*(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+)?)(")',
         "constraint": r'(" *#+ *)([=!><~(.*)]* *[0-9\.]+ *,* *[=!><~(.*)]* *[0-9\.]+)*()',
     }
 
