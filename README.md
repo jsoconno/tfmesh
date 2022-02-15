@@ -323,8 +323,8 @@ Support was added to allow users to see when a resource that is located in a pri
 
 Below are the common errors and what they most likely mean.
 
-* **203 Non-Authoritative Information** - The authentication token (PAT) for the target repository is not set or is in the wrong format.
-* **404 Not Found** - The authentication token (PAT) for the target repository is not set.
-* **401 Not Unauthorized** - The authentication token (PAT) for the target repository set to in incorrect value or the token is expired.
+* **203 Non-Authoritative Information** - the authentication token (PAT) for the target repository is not set or is in the wrong format.
+* **404 Not Found** - the authentication token (PAT) for the target repository is not set.
+* **401 Not Unauthorized** - the authentication token (PAT) for the target repository set to in incorrect value or the token is expired.
 
 For more information on setting variables, see the setting variables section of the docs.
