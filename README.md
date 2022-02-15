@@ -52,6 +52,7 @@ The following Terraform configuration file dependencies are supported.
 * Provider `required_providers` blocks
 * Terraform Registry (Public and Private)
 * Github Modules (Public and Private)
+* Azure DevOps Modules (Public and Private)
 
 Modules hosted in a git repository work so long as semantic versioning is used (e.g. `1.1.1`, `v1.0.0`, `version1.0.0-pre001`, etc.)  Both https and ssh are supported methods for referencing private modules.
 
@@ -312,6 +313,7 @@ The primary way that Terraform Mesh interacts with other private git repositorie
 
 Supported private git repositories:
 * GitHub - use the `github_token` variable or `TFMESH_GITHUB_TOKEN` environment variable.
+* Azure DevOps - use the `azure_devops_token` variable or `TFMESH_AZURE_DEVOPS_TOKEN` environment variable.
 
 To manage resource versions from a private repo, the appropriate token variable must be set.  This can be done on the command line at runtime using the `--var` flag in combination with any command or by setting the environment variable directly on the terminal as described in the setting variables section of the docs.
 
@@ -321,6 +323,7 @@ Support was added to allow users to see when a resource that is located in a pri
 
 Below are the common errors and what they most likely mean.
 
+* **203 Non-Authoritative Information** - The authentication token (PAT) for the target repository is not set or is in the wrong format.
 * **404 Not Found** - The authentication token (PAT) for the target repository is not set.
 * **401 Not Unauthorized** - The authentication token (PAT) for the target repository set to in incorrect value or the token is expired.
 
