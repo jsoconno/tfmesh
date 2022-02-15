@@ -1,6 +1,7 @@
 from pathlib import Path, PurePath
 import os
 import sys
+import base64
 import requests
 import json
 import re
@@ -300,7 +301,31 @@ def get_github_module_versions(user, repo, token=None):
         tag_data = json.loads(response.text)
         versions = [x["name"] for x in tag_data]
     else:
-        # error = f'{response.status_code} {response.reason}'
+        versions = []
+
+    result = {
+        "status_code": response.status_code,
+        "reason": response.reason,
+        "versions": versions
+    }
+
+    return result
+
+def get_azure_devops_module_versions(organization, project, repo, token=None):
+    """
+    Get tags from Azure DevOps repo.
+    """
+    if token:
+        token = str(base64.b64encode(bytes(':'+token, 'ascii')), 'ascii')
+        headers = {'Authorization': 'Basic ' + token}
+        response = requests.get(f"https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repo}/refs?filter=tags/&api-version=6.0-preview.1", headers=headers)
+    else:
+        response = requests.get(f"https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repo}/refs?filter=tags/&api-version=6.0-preview.1")
+
+    if response.status_code == 200:
+        tag_data = json.loads(response.text)
+        versions = [x["name"].split("/")[-1] for x in tag_data["value"]]
+    else:
         versions = []
 
     result = {
@@ -371,6 +396,20 @@ def get_github_user_and_repo(source):
 
     return data
 
+def get_azure_devops_org_project_and_repo(source):
+    """
+    Returns a user and repo based on source.
+    """
+    pattern = r'dev\.azure\.com[/:](.*?)/(.*?)/_git/(.*?)(?:\.git|\?|$)'
+    result = re.findall(pattern, source, re.MULTILINE)[0]
+    data = {
+        "org": result[0],
+        "project": result[1],
+        "repo": result[2]
+    }
+
+    return data
+
 def get_available_versions(target, source=None, exclude_pre_release=False):
     """
     Gets a list of available versions based on API calls to various endpoints.
@@ -381,10 +420,18 @@ def get_available_versions(target, source=None, exclude_pre_release=False):
     except:
         github_token = ""
 
+    try:
+        azure_devops_token = os.environ["TFMESH_AZURE_DEVOPS_TOKEN"]
+    except:
+        azure_devops_token = ""
+
     # Pull available versions
     if target == "modules" and "github" in source:
         data = get_github_user_and_repo(source)
         available_versions = get_github_module_versions(data["user"], data["repo"], token=github_token)
+    elif target == "modules" and "dev.azure" in source:
+        data = get_azure_devops_org_project_and_repo(source)
+        available_versions = get_azure_devops_module_versions(data["org"], data["project"], data["repo"], token=azure_devops_token)
     elif target == "modules":
         available_versions = get_terraform_module_versions(source)
     elif target == "providers":
