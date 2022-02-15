@@ -1,6 +1,7 @@
 from pathlib import Path, PurePath
 import os
 import sys
+import base64
 import requests
 import json
 import re
@@ -309,8 +310,6 @@ def get_github_module_versions(user, repo, token=None):
     }
 
     return result
-
-import base64
 
 def get_azure_devops_module_versions(organization, project, repo, token=None):
     """
